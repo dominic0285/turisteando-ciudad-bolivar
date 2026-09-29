@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel Administrativo — Turisteando CBO</title>
+  <link rel="icon" type="image/png" href="/img/marca/alcaldia-angostura.png"/>
+  <meta name="theme-color" content="#2E134D"/>
+  <link rel="stylesheet" href="/css/main.css"/>
+  <!-- jsPDF para reportes sin servicios externos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { background: var(--fondo); }
+    .admin-wrap { display:flex; min-height: calc(100vh - 64px); }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width:230px; background:var(--azul-indigo); flex-shrink:0; display:flex; flex-direction:column; padding:16px 0; position:sticky; top:64px; height:calc(100vh - 64px); overflow-y:auto; }
+    .sidebar-label { font-size:0.66rem; text-transform:uppercase; letter-spacing:0.12em; color:rgba(255,255,255,0.3); font-weight:800; padding:0 20px; margin-bottom:4px; margin-top:14px; }
+    .sidebar-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--radio-sm); color:rgba(255,255,255,0.65); font-size:0.86rem; font-weight:600; cursor:pointer; transition:all var(--trans); border:none; background:transparent; width:100%; text-align:left; font-family:var(--font-cuerpo); margin:0 8px; width:calc(100% - 16px); }
+    .sidebar-item:hover { background:rgba(255,255,255,0.08); color:#fff; }
+    .sidebar-item.active { background:var(--morado); color:#fff; }
+    .sidebar-item .count-badge { margin-left:auto; background:rgba(255,255,255,0.2); padding:2px 7px; border-radius:999px; font-size:0.68rem; font-weight:800; }
+
+    /* Mobile sidebar overlay */
+    .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:98; }
+    .sidebar-overlay.active { display:block; }
+    .sidebar-toggle { display:none; background:rgba(255,255,255,0.1); border:none; color:#fff; padding:8px; border-radius:8px; cursor:pointer; margin-left:8px; }
+
+    /* ── MAIN ── */
+    .admin-main { flex:1; padding:24px 28px; overflow-y:auto; min-width:0; }
+    .page-title { font-family:var(--font-titulo); font-size:1.5rem; color:var(--azul-indigo); margin-bottom:20px; font-weight:800; }
+
+    /* ── AUTH ── */
+    #adminAuthScreen { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg, var(--purpura-noche) 0%, var(--violeta) 55%, #180C30 100%); padding:16px; position:fixed; inset:0; z-index:200; }
+    .admin-auth-card { background:var(--blanco); border-radius:var(--radio-xl); padding:36px 32px; width:100%; max-width:400px; box-shadow:0 24px 64px rgba(0,0,0,0.25); text-align:center; position:relative; z-index:1; }
+    .admin-auth-card > img { width:68px; height:68px; border-radius:50%; margin-bottom:8px; }
+    .admin-auth-card h2 { margin:8px 0 4px; font-size:1.3rem; color:var(--azul-indigo); }
+    .admin-auth-card p { color:var(--texto-suave); font-size:0.84rem; margin-bottom:24px; }
+
+    /* ── STATS ── */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:12px; margin-bottom:24px; }
+    .stat-card { background:var(--blanco); border-radius:var(--radio); padding:16px; border:1px solid var(--gris-200); border-left:4px solid var(--morado); transition:all var(--trans); }
+    .stat-card:hover { box-shadow:0 4px 16px var(--sombra-media); transform:translateY(-2px); }
+    .stat-value { font-family:var(--font-titulo); font-size:2rem; font-weight:900; line-height:1; margin-bottom:4px; }
+    .stat-label { font-size:0.76rem; font-weight:700; color:var(--texto-suave); }
+
+    /* ── TABLE ── */
+    .filters-bar { background:var(--blanco); border-radius:var(--radio); padding:12px 16px; border:1px solid var(--gris-200); margin-bottom:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .filters-bar input { padding:9px 14px; border:2px solid var(--gris-200); border-radius:var(--radio-sm); font-family:var(--font-cuerpo); font-size:0.86rem; outline:none; transition:border-color var(--trans); flex:1; min-width:180px; }
+    .filters-bar input:focus { border-color:var(--morado); }
+    .filter-chips { display:flex; gap:6px; flex-wrap:wrap; }
+    .chip { padding:5px 12px; border-radius:999px; border:2px solid var(--gris-200); background:transparent; font-family:var(--font-cuerpo); font-size:0.76rem; font-weight:700; cursor:pointer; transition:all var(--trans); color:var(--texto-suave); }
+    .chip:hover { border-color:var(--morado); color:var(--morado); }
+    .chip.active { background:var(--azul-indigo); border-color:var(--azul-indigo); color:#fff; }
+
+    .table-wrap { background:var(--blanco); border-radius:var(--radio); border:1px solid var(--gris-200); overflow:auto; }
+    table { width:100%; border-collapse:collapse; min-width:700px; }
+    thead { background:var(--azul-indigo); }
+    thead th { padding:10px 14px; text-align:left; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:rgba(255,255,255,0.65); font-weight:700; white-space:nowrap; }
+    tbody tr { border-bottom:1px solid var(--gris-200); transition:background var(--trans); }
+    tbody tr:hover { background:var(--gris-100); }
+    tbody tr:last-child { border-bottom:none; }
+    tbody td { padding:10px 14px; font-size:0.84rem; vertical-align:middle; }
+    .table-ruta { display:flex; align-items:center; gap:6px; }
+    .table-ruta-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+    /* ── DETAIL MODAL ── */
+    .detail-section { margin-bottom:18px; }
+    .detail-section h4 { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--texto-suave); margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid var(--gris-200); }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .detail-item { font-size:0.84rem; }
+    .detail-item strong { display:block; font-size:0.7rem; text-transform:uppercase; color:var(--texto-suave); letter-spacing:0.04em; margin-bottom:2px; }
+    .status-selector { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:14px; }
+    .status-btn { padding:8px; border:2px solid var(--gris-200); border-radius:var(--radio-sm); background:transparent; cursor:pointer; font-family:var(--font-cuerpo); font-size:0.74rem; font-weight:700; transition:all var(--trans); color:var(--texto-suave); }
+    .status-btn:hover { border-color:var(--morado); color:var(--morado); }
+    .status-btn.active { color:#fff; }
+    .status-btn[data-estado="pendiente"].active { background:var(--naranja); border-color:var(--naranja); }
+    .status-btn[data-estado="en_revision"].active { background:var(--celeste); border-color:var(--celeste); color:var(--azul-indigo); }
+    .status-btn[data-estado="aprobada"].active { background:var(--verde); border-color:var(--verde); }
+    .status-btn[data-estado="denegada"].active { background:var(--rojo); border-color:var(--rojo); }
+    .status-btn[data-estado="en_proceso"].active { background:var(--naranja); border-color:var(--naranja); }
+    .status-btn[data-estado="cumplida"].active { background:var(--morado); border-color:var(--morado); }
+
+    /* ── DASHBOARD ── */
+    .dashboard-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .dashboard-panel { background:var(--blanco); border-radius:var(--radio); padding:20px; border:1px solid var(--gris-200); }
+    .dashboard-panel h3 { font-size:0.95rem; margin-bottom:14px; color:var(--azul-indigo); display:flex; align-items:center; gap:8px; }
+
+    /* ── NOTICIAS ADMIN ── */
+    .noticia-admin-card { background:var(--blanco); border-radius:var(--radio); border:1px solid var(--gris-200); padding:16px; margin-bottom:12px; display:flex; gap:14px; align-items:flex-start; transition:all var(--trans); box-shadow:var(--sombra); }
+    .noticia-admin-card:hover { box-shadow:var(--sombra-hover); }
+    .noticia-admin-card img { width:90px; height:70px; object-fit:cover; border-radius:var(--radio-sm); flex-shrink:0; }
+    .noticia-admin-info { flex:1; min-width:0; }
+    .noticia-admin-info h4 { font-size:0.9rem; margin-bottom:4px; color:var(--texto); }
+    .noticia-admin-info p { font-size:0.8rem; color:var(--texto-suave); line-height:1.5; margin-bottom:4px; }
+    .noticia-date { font-size:0.7rem; color:var(--morado); font-weight:700; display:flex; align-items:center; gap:4px; }
+    .img-preview-wrap { width:100%; max-height:180px; border-radius:var(--radio-sm); overflow:hidden; margin-bottom:12px; display:none; }
+    .img-preview-wrap img { width:100%; height:180px; object-fit:cover; }
+    .img-preview-wrap.active { display:block; }
+
+    /* ── REPORTES ── */
+    .reporte-filters { background:var(--blanco); border-radius:var(--radio); padding:20px; border:1px solid var(--gris-200); margin-bottom:20px; }
+    .reporte-filters h3 { font-size:0.95rem; margin-bottom:14px; color:var(--azul-indigo); }
+
+    @media (max-width:768px) {
+      .sidebar { position:fixed; left:-240px; top:64px; height:calc(100vh - 64px); z-index:99; transition:left 0.3s; }
+      .sidebar.mobile-open { left:0; }
+      .sidebar-overlay.active { display:block; }
+      .sidebar-toggle { display:flex; }
+      .admin-main { padding:16px; }
+      .detail-grid { grid-template-columns:1fr; }
+      .status-selector { grid-template-columns:1fr 1fr; }
+      .dashboard-grid { grid-template-columns:1fr; }
+      .stats-grid { grid-template-columns:repeat(2,1fr); }
+      .filters-bar { flex-direction:column; align-items:stretch; }
+      .filters-bar input { width:100%; }
+    }
+
+    /* ── BIBLIOTECA DE IMÁGENES ── */
+    .zona-soltar {
+      border:2px dashed var(--gris-300); border-radius:var(--radio);
+      background:var(--blanco); padding:30px 20px; text-align:center;
+      cursor:pointer; transition:border-color var(--trans), background var(--trans);
+    }
+    .zona-soltar:hover, .zona-soltar.encima { border-color:var(--morado); background:rgba(108,46,185,0.04); }
+    .zona-soltar h4 { margin-bottom:4px; font-size:0.95rem; }
+    .zona-soltar p { font-size:0.8rem; color:var(--texto-suave); }
+    .galeria { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-top:18px; }
+    .galeria-item {
+      position:relative; border-radius:var(--radio-sm); overflow:hidden;
+      border:2px solid var(--gris-200); background:var(--blanco); aspect-ratio:4/3; cursor:pointer;
+      transition:border-color var(--trans), transform var(--trans);
+    }
+    .galeria-item:hover { transform:translateY(-2px); border-color:var(--morado); }
+    .galeria-item.elegido { border-color:var(--morado); box-shadow:0 0 0 3px rgba(108,46,185,0.18); }
+    .galeria-item img { width:100%; height:100%; object-fit:cover; display:block; }
+    .galeria-item .pie {
+      position:absolute; inset:auto 0 0 0; background:rgba(46,19,77,0.82); color:#fff;
+      font-size:0.68rem; padding:5px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .galeria-item .borrar {
+      position:absolute; top:6px; right:6px; width:26px; height:26px; border-radius:50%;
+      background:rgba(205,18,23,0.92); color:#fff; border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity var(--trans);
+    }
+    .galeria-item:hover .borrar { opacity:1; }
+
+    /* ── FICHAS DE RUTA / ATRACTIVO ── */
+    .ficha {
+      background:var(--blanco); border:1px solid var(--gris-200); border-radius:var(--radio);
+      display:flex; gap:16px; padding:14px; margin-bottom:12px; align-items:flex-start; flex-wrap:wrap;
+    }
+    .ficha-portada {
+      width:150px; height:112px; border-radius:var(--radio-sm); flex-shrink:0; overflow:hidden;
+      background:var(--gris-100); display:flex; align-items:center; justify-content:center;
+      color:var(--texto-claro); font-size:0.72rem; text-align:center; padding:8px;
+    }
+    .ficha-portada img { width:100%; height:100%; object-fit:cover; }
+    .ficha-cuerpo { flex:1; min-width:220px; }
+    .ficha-cuerpo h4 { font-size:0.95rem; margin-bottom:4px; }
+    .ficha-cuerpo p { font-size:0.82rem; color:var(--texto-suave); line-height:1.55; margin-bottom:10px; }
+    .ficha-acciones { display:flex; gap:8px; flex-wrap:wrap; }
+
+    /* ── BANDEJA DE MENSAJES ── */
+    .bandeja { display:grid; grid-template-columns:minmax(260px,340px) 1fr; gap:16px; align-items:start; }
+    .bandeja-lista { display:flex; flex-direction:column; gap:8px; max-height:70vh; overflow-y:auto; padding-right:4px; }
+    .bandeja-hilo {
+      background:var(--blanco); border:1px solid var(--gris-200); border-left:4px solid var(--gris-300);
+      border-radius:var(--radio-sm); padding:12px 14px; cursor:pointer; text-align:left;
+      width:100%; font-family:var(--font-cuerpo); transition:border-color var(--trans), box-shadow var(--trans);
+    }
+    .bandeja-hilo:hover { box-shadow:var(--sombra-media); }
+    .bandeja-hilo.activo { border-left-color:var(--morado); box-shadow:var(--sombra-media); }
+    .bandeja-hilo.sinleer { border-left-color:var(--magenta); }
+    .bandeja-hilo b { display:block; font-size:0.86rem; font-family:var(--font-titulo); font-weight:800; color:var(--purpura-noche); }
+    .bandeja-hilo .quien { display:block; font-size:0.76rem; color:var(--morado); font-weight:700; margin:2px 0 4px; }
+    .bandeja-hilo .previo { display:block; font-size:0.78rem; color:var(--texto-suave); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .bandeja-panel { background:var(--blanco); border:1px solid var(--gris-200); border-radius:var(--radio); padding:18px; }
+    .chat-cuerpo { background:var(--fondo-alt); border-radius:var(--radio-sm); padding:14px; max-height:44vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+    .burbuja { max-width:82%; padding:10px 14px; border-radius:16px; font-size:0.86rem; line-height:1.6; word-break:break-word; }
+    .burbuja .texto { white-space:pre-wrap; display:block; }
+    .burbuja .quien { display:block; font-size:0.66rem; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:4px; opacity:0.7; }
+    .burbuja .cuando { display:block; font-size:0.66rem; margin-top:6px; opacity:0.6; }
+    .burbuja.mia   { align-self:flex-end;  background:var(--morado); color:#fff; border-bottom-right-radius:5px; }
+    .burbuja.ellos { align-self:flex-start; background:var(--blanco); color:var(--texto); border:1px solid var(--gris-200); border-bottom-left-radius:5px; }
+    .chat-envio { display:flex; gap:10px; align-items:flex-end; margin-top:12px; }
+    .chat-envio textarea { flex:1; min-height:52px; max-height:140px; padding:11px 14px; border:2px solid var(--gris-200); border-radius:var(--radio-sm); font-family:var(--font-cuerpo); font-size:0.88rem; outline:none; resize:vertical; }
+    .chat-envio textarea:focus { border-color:var(--morado); }
+    .aviso-config {
+      background:#FFF8E1; border:1px solid #FFE082; border-left:4px solid var(--amarillo);
+      border-radius:var(--radio-sm); padding:14px 16px; font-size:0.85rem; line-height:1.6; margin-bottom:16px;
+    }
+    .aviso-config strong { color:var(--purpura-noche); }
+    @media (max-width:880px) { .bandeja { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<div id="adminAuthScreen">
+  <div class="admin-auth-card">
+    <div class="cintillo cintillo-sm" style="margin:-8px auto 22px;">
+      <img src="/img/marca/venezuela.png" alt="República Bolivariana de Venezuela"/>
+      <img src="/img/marca/gobernacion-bolivar.png" alt="Gobernación del Estado Bolívar"/>
+      <img src="/img/marca/alcaldia-angostura.png" alt="Alcaldía del Municipio Angostura del Orinoco"/>
+    </div>
+    <img src="/img/marca/turisteando.png" alt="Turisteando en Ciudad Bolívar"/>
+    <h2>Panel Administrativo</h2>
+    <p>Dirección de Turismo · Alcaldía Angostura del Orinoco</p>
+    <form onsubmit="adminLogin(event)">
+      <div class="form-group" style="text-align:left;">
+        <label>Usuario o Correo Electrónico</label>
+        <input type="text" id="adminEmail" placeholder="Usuario o correo" required/>
+      </div>
+      <div class="form-group" style="text-align:left;">
+        <label>Contraseña</label>
+        <input type="password" id="adminPass" placeholder="••••••••" required/>
+      </div>
+      <button type="submit" class="btn btn-morado btn-full btn-lg" id="adminLoginBtn">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        Acceder al Panel
+      </button>
+    </form>
+    <p style="margin-top:20px;font-size:0.78rem;">
+      <a href="/portal.html" style="color:var(--morado);">← Volver al Portal</a>
+    </p>
+  </div>
+</div>
+
+<nav class="navbar" id="adminNav" style="display:none;">
+  <div style="display:flex;align-items:center;gap:0;">
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menú">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <a href="/" class="navbar-logo">
+      <img src="/img/marca/turisteando.png" alt="Turisteando CBO" class="navbar-logo-img"/>
+      <div class="navbar-brand">Panel Administrativo <span>Dirección de Turismo Municipal</span></div>
+    </a>
+  </div>
+  <div class="navbar-links">
+    <span id="adminUserLabel" style="color:rgba(255,255,255,0.5);font-size:0.8rem;"></span>
+    <button onclick="adminLogout()" class="btn btn-sm btn-outline-white">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Salir
+    </button>
+  </div>
+</nav>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="admin-wrap" id="adminPanel" style="display:none;">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-label">Gestión</div>
+    <button class="sidebar-item active" onclick="showView('dashboard')" id="sidebarDash">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="sidebar-item" onclick="showView('solicitudes')" id="sidebarSolic">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Solicitudes
+      <span class="count-badge" id="pendCount">0</span>
+    </button>
+    <button class="sidebar-item" onclick="showView('noticias')" id="sidebarNoticias">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+      Noticias
+    </button>
+    <button class="sidebar-item" onclick="showView('mensajes')" id="sidebarMensajes">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Mensajes
+      <span class="count-badge" id="msgCount" style="display:none;">0</span>
+    </button>
+    <button class="sidebar-item" onclick="showView('reportes')" id="sidebarReportes">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Reportes PDF
+    </button>
+
+    <div class="sidebar-label">Contenido del Sitio</div>
+    <button class="sidebar-item" onclick="showView('imagenes')" id="sidebarImagenes">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-5L5 21"/></svg>
+      Imágenes
+    </button>
+    <button class="sidebar-item" onclick="showView('rutas')" id="sidebarRutas">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      Rutas y portadas
+    </button>
+    <button class="sidebar-item" onclick="showView('atractivos')" id="sidebarAtractivos">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/></svg>
+      Atractivos
+    </button>
+
+    <div class="sidebar-label">Filtrar Estado</div>
+    <button class="sidebar-item" onclick="filterByEstado('pendiente')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Pendientes
+    </button>
+    <button class="sidebar-item" onclick="filterByEstado('en_revision')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      En Revisión
+    </button>
+    <button class="sidebar-item" onclick="filterByEstado('aprobada')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Aprobadas
+    </button>
+    <button class="sidebar-item" onclick="filterByEstado('cumplida')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z"/></svg>
+      Cumplidas
+    </button>
+    <button class="sidebar-item" onclick="filterByEstado('denegada')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Denegadas
+    </button>
+
+    <div style="flex:1;"></div>
+    <div style="padding:8px;">
+      <a href="/" class="sidebar-item" style="text-decoration:none;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Ver Sitio Web
+      </a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+
+    <!-- DASHBOARD -->
+    <div id="viewDashboard">
+      <h1 class="page-title">Dashboard General</h1>
+      <div class="stats-grid" id="statsGrid">
+        <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="dashboard-panel">
+          <h3>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+            Solicitudes por Ruta
+          </h3>
+          <div id="porRutaChart"><div class="loading-wrap"><div class="spinner"></div></div></div>
+        </div>
+        <div class="dashboard-panel">
+          <h3>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Últimas Solicitudes
+          </h3>
+          <div id="recentList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOLICITUDES -->
+    <div id="viewSolicitudes" class="hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <h1 class="page-title" style="margin:0;" id="solicView-title">Todas las Solicitudes</h1>
+        <button onclick="loadSolicitudesAdmin()" class="btn btn-sm btn-outline">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Actualizar
+        </button>
+      </div>
+      <div class="filters-bar">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre, institución o cédula..." oninput="debounceSearch()"/>
+        <div class="filter-chips">
+          <button class="chip active" onclick="filterByEstado('todos')" id="chipTodos">Todos</button>
+          <button class="chip" onclick="filterByEstado('pendiente')" id="chipPendiente">Pendiente</button>
+          <button class="chip" onclick="filterByEstado('en_revision')" id="chipEn_revision">Revisión</button>
+          <button class="chip" onclick="filterByEstado('aprobada')" id="chipAprobada">Aprobada</button>
+          <button class="chip" onclick="filterByEstado('en_proceso')" id="chipEn_proceso">Proceso</button>
+          <button class="chip" onclick="filterByEstado('cumplida')" id="chipCumplida">Cumplida</button>
+          <button class="chip" onclick="filterByEstado('denegada')" id="chipDenegada">Denegada</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Solicitante</th><th>Ruta</th><th>Grupo</th><th>Personas</th><th>Fecha Pref.</th><th>Estado</th><th>Recibida</th><th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="solicitudesTableBody">
+            <tr><td colspan="9"><div class="loading-wrap"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NOTICIAS -->
+    <div id="viewNoticias" class="hidden">
+      <h1 class="page-title">Noticias y Publicaciones</h1>
+      <p style="color:var(--texto-suave);font-size:0.9rem;margin-bottom:20px;">Publica imágenes, flyers y noticias visibles en el sitio público.</p>
+      <div class="dashboard-panel" style="margin-bottom:20px;">
+        <h3 style="margin-bottom:14px;">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Nueva Publicación
+        </h3>
+        <div class="form-group"><label>Título *</label><input type="text" id="noticiaTitulo" placeholder="Título de la publicación"/></div>
+        <div class="form-group"><label>Contenido / Descripción</label><textarea id="noticiaContenido" placeholder="Escribe el contenido de la noticia..."></textarea></div>
+        <div class="form-group">
+          <label>Imagen de la publicación</label>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+            <button type="button" class="btn btn-sm btn-morado" onclick="elegirImagenNoticia()">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-5L5 21"/></svg>
+              Subir o elegir imagen
+            </button>
+            <span style="font-size:0.8rem;color:var(--texto-suave);" id="noticiaImagenNom">Ninguna imagen elegida</span>
+            <button type="button" class="btn btn-sm btn-outline" onclick="quitarImagenNoticia()">Quitar</button>
+          </div>
+          <details>
+            <summary style="font-size:0.78rem;color:var(--texto-suave);cursor:pointer;">o pegar un enlace externo</summary>
+            <input type="url" id="noticiaImagen" placeholder="https://..." oninput="previewNoticiaImgUrl()" style="margin-top:8px;"/>
+            <p style="font-size:0.74rem;color:var(--texto-suave);margin-top:4px;">Solo si la imagen ya está publicada en otro sitio y es accesible para cualquiera.</p>
+          </details>
+        </div>
+        <div class="img-preview-wrap" id="imgPreviewWrap"><img id="imgPreview" alt="Preview"/></div>
+        <button class="btn btn-morado btn-full" onclick="publicarNoticia()">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          Publicar Noticia
+        </button>
+      </div>
+      <h3 style="margin-bottom:14px;">Publicaciones Actuales</h3>
+      <div id="noticiasAdminList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="viewReportes" class="hidden">
+      <h1 class="page-title">Generación de Reportes PDF</h1>
+      <p style="color:var(--texto-suave);font-size:0.9rem;margin-bottom:20px;">Genera reportes detallados en PDF sin necesidad de servicios externos.</p>
+
+      <div class="reporte-filters">
+        <h3 style="margin-bottom:14px;font-size:0.95rem;">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+          Filtros del Reporte
+        </h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Desde (fecha)</label>
+            <input type="date" id="reporteDesde"/>
+          </div>
+          <div class="form-group">
+            <label>Hasta (fecha)</label>
+            <input type="date" id="reporteHasta"/>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-morado" onclick="generarReportePDF('general')">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Reporte General PDF
+          </button>
+          <button class="btn btn-naranja" onclick="generarReportePDF('detallado')">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Reporte Detallado PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-panel">
+          <h3>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Tipos de Reportes
+          </h3>
+          <div style="font-size:0.85rem;color:var(--texto-suave);line-height:1.8;">
+            <p><strong style="color:var(--morado);">Reporte General:</strong> Resumen con estadísticas, totales por estado, por ruta y por tipo de grupo.</p>
+            <br/>
+            <p><strong style="color:var(--naranja);">Reporte Detallado:</strong> Listado completo de todas las solicitudes con todos los datos del solicitante, grupo y estado actual.</p>
+          </div>
+        </div>
+        <div class="dashboard-panel">
+          <h3>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Instrucciones
+          </h3>
+          <div style="font-size:0.85rem;color:var(--texto-suave);line-height:1.8;">
+            <p>1. Selecciona un rango de fechas (opcional).</p>
+            <p>2. Elige el tipo de reporte.</p>
+            <p>3. El PDF se descargará automáticamente.</p>
+            <p>4. Sin filtros de fecha = todas las solicitudes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- MENSAJES -->
+    <div id="viewMensajes" class="hidden">
+      <h1 class="page-title">Bandeja de Mensajes</h1>
+      <div class="filters-bar">
+        <select id="msgFiltroEstado" onchange="loadBandeja()" style="padding:9px 12px;border:2px solid var(--gris-200);border-radius:var(--radio-sm);font-family:var(--font-cuerpo);font-size:0.86rem;">
+          <option value="">Todos los hilos</option>
+          <option value="abierta">Esperan respuesta</option>
+          <option value="respondida">Ya respondidos</option>
+          <option value="cerrada">Cerrados</option>
+        </select>
+        <select id="msgFiltroTipo" onchange="loadBandeja()" style="padding:9px 12px;border:2px solid var(--gris-200);border-radius:var(--radio-sm);font-family:var(--font-cuerpo);font-size:0.86rem;">
+          <option value="">Rutas y soporte</option>
+          <option value="ruta">Solo rutas</option>
+          <option value="soporte">Solo soporte</option>
+        </select>
+        <button class="btn btn-sm btn-outline" onclick="loadBandeja()">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Actualizar
+        </button>
+      </div>
+      <div class="bandeja">
+        <div class="bandeja-lista" id="bandejaLista">
+          <div class="loading-wrap"><div class="spinner"></div></div>
+        </div>
+        <div class="bandeja-panel" id="bandejaPanel">
+          <div class="empty-state" style="padding:36px 16px;">
+            <svg class="icon-empty" width="46" height="46" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <h3>Elige una conversación</h3>
+            <p>Los mensajes sin leer aparecen marcados en la lista de la izquierda.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMÁGENES -->
+    <div id="viewImagenes" class="hidden">
+      <h1 class="page-title">Imágenes del Sitio</h1>
+      <div id="avisoR2"></div>
+      <p style="color:var(--texto-suave);font-size:0.9rem;margin-bottom:16px;">
+        Sube aquí las fotografías de las rutas, los atractivos y las noticias. Se guardan en el
+        almacenamiento del sitio y quedan disponibles para usarlas donde haga falta.
+      </p>
+
+      <div class="zona-soltar" id="zonaSoltar" onclick="document.getElementById('archivoInput').click()">
+        <svg width="34" height="34" fill="none" viewBox="0 0 24 24" stroke="var(--morado)" stroke-width="1.6" style="margin-bottom:8px;"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        <h4>Arrastra las imágenes aquí</h4>
+        <p>o haz clic para elegirlas · JPG, PNG, WebP o AVIF · hasta 8 MB cada una</p>
+        <input type="file" id="archivoInput" accept="image/jpeg,image/png,image/webp,image/avif" multiple hidden onchange="subirArchivos(this.files)"/>
+      </div>
+      <div id="subidaProgreso" style="margin-top:12px;"></div>
+
+      <div class="filters-bar" style="margin-top:20px;">
+        <select id="filtroCarpeta" onchange="loadMedios()" style="padding:9px 12px;border:2px solid var(--gris-200);border-radius:var(--radio-sm);font-family:var(--font-cuerpo);font-size:0.86rem;">
+          <option value="todas">Todas las carpetas</option>
+          <option value="rutas">Rutas</option>
+          <option value="atractivos">Atractivos</option>
+          <option value="noticias">Noticias</option>
+          <option value="general">General</option>
+        </select>
+        <span style="font-size:0.8rem;color:var(--texto-suave);" id="mediosTotal"></span>
+      </div>
+      <div class="galeria" id="galeriaMedios"></div>
+    </div>
+
+    <!-- RUTAS -->
+    <div id="viewRutas" class="hidden">
+      <h1 class="page-title">Rutas y Portadas</h1>
+      <p style="color:var(--texto-suave);font-size:0.9rem;margin-bottom:20px;">
+        La portada de cada ruta es la fotografía que ven los visitantes en el inicio.
+        Mientras no cargues una, el sitio muestra una imagen de reserva.
+      </p>
+      <div id="rutasAdminList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- ATRACTIVOS -->
+    <div id="viewAtractivos" class="hidden">
+      <h1 class="page-title">Atractivos de la Ciudad</h1>
+      <p style="color:var(--texto-suave);font-size:0.9rem;margin-bottom:20px;">
+        Son las tarjetas del mosaico del inicio: la Catedral, el Paseo Orinoco, el Puente Angostura…
+        El que marques como destacado ocupa el doble de ancho.
+      </p>
+      <div class="dashboard-panel" style="margin-bottom:20px;background:var(--blanco);border:1px solid var(--gris-200);border-radius:var(--radio);padding:18px;">
+        <h3 style="margin-bottom:14px;font-size:0.98rem;">Nuevo atractivo</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Nombre *</label><input type="text" id="atrNombre" placeholder="Ej.: Fortín El Zamuro"/></div>
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="atrCategoria">
+              <option value="patrimonio">Patrimonio</option>
+              <option value="arquitectura">Arquitectura</option>
+              <option value="paisaje">Paisaje</option>
+              <option value="naturaleza">Naturaleza</option>
+              <option value="gastronomia">Gastronomía</option>
+              <option value="cultura">Cultura</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Descripción</label><textarea id="atrDescripcion" placeholder="Dos o tres líneas sobre el lugar..."></textarea></div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+          <button class="btn btn-sm btn-outline" onclick="elegirImagen(c => { atrImagenClave = c.clave; document.getElementById('atrImagenNom').textContent = c.clave.split('/').pop(); })">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-5L5 21"/></svg>
+            Elegir imagen
+          </button>
+          <span style="font-size:0.8rem;color:var(--texto-suave);" id="atrImagenNom">Ninguna imagen elegida</span>
+          <label style="display:flex;align-items:center;gap:7px;font-size:0.84rem;font-weight:700;cursor:pointer;">
+            <input type="checkbox" id="atrDestacado" style="width:auto;"/> Destacado
+          </label>
+        </div>
+        <button class="btn btn-morado" onclick="crearAtractivo()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Agregar atractivo
+        </button>
+      </div>
+      <div id="atractivosAdminList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL DETALLE -->
+
+<!-- MODAL SELECTOR DE IMAGEN -->
+<div class="modal-overlay" id="modalImagenes">
+  <div class="modal" style="max-width:760px;">
+    <div class="modal-header">
+      <h3>Elegir imagen</h3>
+      <button class="modal-close" onclick="closeModal('modalImagenes')" aria-label="Cerrar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="zona-soltar" style="padding:18px;" onclick="document.getElementById('archivoInputModal').click()">
+        <h4 style="font-size:0.88rem;">Subir una imagen nueva</h4>
+        <p>JPG, PNG, WebP o AVIF · hasta 8 MB</p>
+        <input type="file" id="archivoInputModal" accept="image/jpeg,image/png,image/webp,image/avif" hidden onchange="subirDesdeModal(this.files)"/>
+      </div>
+      <div id="modalSubidaProgreso" style="margin-top:10px;"></div>
+      <div class="galeria" id="galeriaModal" style="margin-top:14px;">
+        <div class="loading-wrap" style="grid-column:1/-1;"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalDetalle">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <h3 id="modalDetalleTitle">Solicitud #0</h3>
+      <button class="modal-close" onclick="closeModal('modalDetalle')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalDetalleBody"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const API = '/api';
+let adminUser = null;
+let currentEstadoFilter = 'todos';
+let searchTimeout = null;
+let selectedEstado = '';
+
+const ESTADO_LABELS = { pendiente:'Pendiente', en_revision:'En Revisión', aprobada:'Aprobada', denegada:'Denegada', en_proceso:'En Proceso', cumplida:'Cumplida' };
+const TIPO_LABELS = { persona_natural:'Persona Natural', institucion:'Institución', colegio:'Colegio/U.E.', universidad:'Universidad', empresa:'Empresa', familia:'Grupo Familiar', turista:'Turistas', otro:'Otro' };
+
+// ── DATE HELPER ──
+function fmtFecha(valor, opciones) {
+  if (!valor) return '';
+  let str = String(valor).replace(' ', 'T');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) str += 'T12:00:00';
+  const d = new Date(str);
+  if (isNaN(d)) return String(valor);
+  return d.toLocaleDateString('es-VE', { timeZone: 'America/Caracas', ...opciones });
+}
+
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  const icons = { success:`<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`, error:`<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` };
+  t.innerHTML = (icons[type]||'') + msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+function getAdminToken() { return localStorage.getItem('admin_token'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+  document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+
+// ── ADMIN LOGIN ──
+async function adminLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('adminLoginBtn'); btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email: document.getElementById('adminEmail').value, password: document.getElementById('adminPass').value })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error||'Credenciales incorrectas.','error'); return; }
+    if (data.user.rol !== 'admin') { toast('Esta cuenta no tiene acceso administrativo.','error'); return; }
+    localStorage.setItem('admin_token', data.token);
+    localStorage.setItem('admin_user', JSON.stringify(data.user));
+    adminUser = data.user;
+    showAdminPanel();
+    toast(`Bienvenida, ${data.user.nombre.split(' ')[0]}`, 'success');
+  } catch { toast('Error de conexión.','error'); }
+  finally { btn.disabled = false; }
+}
+
+function adminLogout() {
+  localStorage.removeItem('admin_token'); localStorage.removeItem('admin_user'); adminUser = null;
+  document.getElementById('adminAuthScreen').style.display = 'flex';
+  document.getElementById('adminNav').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'none';
+}
+
+function showAdminPanel() {
+  document.getElementById('adminAuthScreen').style.display = 'none';
+  document.getElementById('adminNav').style.display = 'flex';
+  document.getElementById('adminPanel').style.display = 'flex';
+  document.getElementById('adminUserLabel').textContent = adminUser.nombre;
+  loadDashboard();
+}
+
+// ── VIEWS ──
+const VIEWS = ['dashboard','solicitudes','mensajes','noticias','reportes','imagenes','rutas','atractivos'];
+function showView(v, skipLoad = false) {
+  VIEWS.forEach(x => {
+    const el = document.getElementById(`view${x.charAt(0).toUpperCase()+x.slice(1)}`);
+    if (el) el.classList.toggle('hidden', x !== v);
+  });
+  const BOTONES = {
+    dashboard:'sidebarDash', solicitudes:'sidebarSolic', mensajes:'sidebarMensajes',
+    noticias:'sidebarNoticias', reportes:'sidebarReportes',
+    imagenes:'sidebarImagenes', rutas:'sidebarRutas', atractivos:'sidebarAtractivos',
+  };
+  Object.entries(BOTONES).forEach(([vista, id]) => {
+    const b = document.getElementById(id);
+    if (b) b.classList.toggle('active', v === vista);
+  });
+
+  if (v !== 'mensajes') detenerSondeoBandeja();
+
+  if (!skipLoad) {
+    if (v==='noticias')    renderNoticiasAdmin();
+    if (v==='solicitudes') loadSolicitudesAdmin();
+    if (v==='mensajes')    loadBandeja();
+    if (v==='imagenes')    loadMedios();
+    if (v==='rutas')       loadRutasAdmin();
+    if (v==='atractivos')  loadAtractivosAdmin();
+  }
+  
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  try {
+    const res = await fetch(`${API}/admin/dashboard`, { headers:{'Authorization':`Bearer ${getAdminToken()}`} });
+    const data = await res.json();
+    if (!res.ok) return;
+    const { stats, porRuta, recientes, mensajes } = data;
+    if (mensajes) pintarContadorMensajes(mensajes.sin_leer);
+
+    const statsItems = [
+      { key:'total', label:'Total', color:'var(--celeste)' },
+      { key:'pendientes', label:'Pendientes', color:'var(--naranja)' },
+      { key:'en_revision', label:'En Revisión', color:'var(--celeste)' },
+      { key:'aprobadas', label:'Aprobadas', color:'var(--verde)' },
+      { key:'en_proceso', label:'En Proceso', color:'var(--naranja)' },
+      { key:'cumplidas', label:'Cumplidas', color:'var(--morado)' },
+      { key:'denegadas', label:'Denegadas', color:'var(--rojo)' },
+    ];
+    document.getElementById('statsGrid').innerHTML = statsItems.map(s => `
+      <div class="stat-card" style="border-left-color:${s.color}">
+        <div class="stat-value" style="color:${s.color}">${stats[s.key]||0}</div>
+        <div class="stat-label">${s.label}</div>
+      </div>
+    `).join('');
+    document.getElementById('pendCount').textContent = stats.pendientes||0;
+
+    const maxVal = Math.max(...porRuta.map(r=>+r.total), 1);
+    document.getElementById('porRutaChart').innerHTML = porRuta.map(r => `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${r.color};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.nombre}</div>
+          <div style="height:5px;border-radius:3px;background:var(--gris-200);margin-top:3px;">
+            <div style="height:100%;border-radius:3px;background:${r.color};width:${(+r.total/maxVal*100).toFixed(0)}%;transition:width 0.6s;"></div>
+          </div>
+        </div>
+        <span style="font-weight:800;font-size:0.88rem;color:${r.color};width:22px;text-align:right;flex-shrink:0">${r.total}</span>
+      </div>
+    `).join('');
+
+    document.getElementById('recentList').innerHTML = recientes.length ? recientes.map(s => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gris-200);cursor:pointer;border-radius:6px;padding-left:6px;transition:background 0.15s;" onclick="openDetail(${s.id})" onmouseover="this.style.background='var(--gris-100)'" onmouseout="this.style.background='transparent'">
+        <div style="width:8px;height:8px;border-radius:50%;background:${s.ruta_color||'#ccc'};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:0.84rem;">${s.nombre_solicitante}</div>
+          <div style="font-size:0.7rem;color:var(--texto-suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.ruta_nombre}</div>
+        </div>
+        <span class="badge badge-${s.estado}" style="font-size:0.66rem;">${ESTADO_LABELS[s.estado]}</span>
+      </div>
+    `).join('') : '<p style="color:var(--texto-suave);text-align:center;padding:20px;font-size:0.85rem;">No hay solicitudes aún</p>';
+  } catch(e) { console.error(e); }
+}
+
+// ── SOLICITUDES ──
+async function loadSolicitudesAdmin(estado=null, buscar=null) {
+  const body = document.getElementById('solicitudesTableBody');
+  body.innerHTML = `<tr><td colspan="9"><div class="loading-wrap"><div class="spinner"></div></div></td></tr>`;
+  try {
+    let url = `${API}/admin/solicitudes`;
+    const params = new URLSearchParams();
+    if (estado && estado !== 'todos') params.set('estado', estado);
+    if (buscar) params.set('buscar', buscar);
+    if ([...params].length) url += '?' + params.toString();
+    const res = await fetch(url, { headers:{'Authorization':`Bearer ${getAdminToken()}`} });
+    const data = await res.json();
+    if (!res.ok) { body.innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--rojo);">Error: ${data.error}</td></tr>`; return; }
+    if (!data.length) { body.innerHTML=`<tr><td colspan="9"><div class="empty-state" style="padding:32px;"><svg class="icon-empty" width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><h3>Sin solicitudes</h3></div></td></tr>`; return; }
+    body.innerHTML = data.map(s => {
+      const total = (+s.cantidad_adultos||0)+(+s.cantidad_menores||0);
+      const fecha = s.created_at ? fmtFecha(s.created_at, {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
+      const fechaPref = s.fecha_preferida ? fmtFecha(s.fecha_preferida, {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
+      return `<tr>
+        <td><strong style="color:var(--azul-indigo)">#${s.id}</strong></td>
+        <td>
+          <div style="font-weight:700;font-size:0.86rem;">${s.nombre_solicitante}</div>
+          <div style="font-size:0.7rem;color:var(--texto-suave);">${s.cedula_solicitante||''}</div>
+        </td>
+        <td>
+          <div class="table-ruta">
+            <div class="table-ruta-dot" style="background:${s.ruta_color||'#ccc'}"></div>
+            <span style="font-size:0.8rem;">${s.ruta_nombre||'—'}</span>
+          </div>
+        </td>
+        <td>
+          <div style="font-size:0.8rem;">${TIPO_LABELS[s.tipo_grupo]||s.tipo_grupo}</div>
+          <div style="font-size:0.7rem;color:var(--texto-suave);">${s.nombre_institucion||''}</div>
+        </td>
+        <td style="text-align:center"><strong>${total}</strong></td>
+        <td style="font-size:0.8rem;">${fechaPref}</td>
+        <td><span class="badge badge-${s.estado}">${ESTADO_LABELS[s.estado]||s.estado}</span></td>
+        <td style="color:var(--texto-suave);font-size:0.76rem;">${fecha}</td>
+        <td>
+          <button onclick="openDetail(${s.id})" class="btn btn-sm btn-azul">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            Gestionar
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) { body.innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--rojo);">Error de conexión</td></tr>`; }
+}
+
+function filterByEstado(estado) {
+  currentEstadoFilter = estado;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  const chipEl = document.getElementById(`chip${estado.charAt(0).toUpperCase()+estado.slice(1)}`);
+  if (chipEl) chipEl.classList.add('active');
+  else document.getElementById('chipTodos')?.classList.add('active');
+  const titleMap = { todos:'Todas las Solicitudes', pendiente:'Pendientes', en_revision:'En Revisión', aprobada:'Aprobadas', en_proceso:'En Proceso', cumplida:'Cumplidas', denegada:'Denegadas' };
+  document.getElementById('solicView-title').textContent = titleMap[estado]||'Solicitudes';
+  showView('solicitudes', true);
+  loadSolicitudesAdmin(estado);
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    const v = document.getElementById('searchInput').value.trim();
+    loadSolicitudesAdmin(null, v||null);
+  }, 400);
+}
+
+// ── DETAIL MODAL ──
+async function openDetail(id) {
+  document.getElementById('modalDetalleTitle').textContent = `Solicitud #${id}`;
+  document.getElementById('modalDetalle').classList.add('active');
+  document.getElementById('modalDetalleBody').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(`${API}/admin/solicitudes`, { headers:{'Authorization':`Bearer ${getAdminToken()}`} });
+    const all = await res.json();
+    const s = all.find(x => x.id === id);
+    if (!s) { document.getElementById('modalDetalleBody').innerHTML = '<p>No encontrada.</p>'; return; }
+    const total = (+s.cantidad_adultos||0)+(+s.cantidad_menores||0);
+    selectedEstado = s.estado;
+    document.getElementById('modalDetalleBody').innerHTML = `
+      <div class="detail-section">
+        <h4>Ruta Solicitada</h4>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radio-sm);border:2px solid ${s.ruta_color||'var(--gris-200)'}">
+          <div style="width:38px;height:38px;border-radius:10px;background:${s.ruta_color||'#ccc'}15;color:${s.ruta_color||'#333'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+          </div>
+          <div style="font-weight:800;font-size:0.95rem;color:${s.ruta_color||'var(--texto)'};">${s.ruta_nombre||'—'}</div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Datos del Solicitante</h4>
+        <div class="detail-grid">
+          <div class="detail-item"><strong>Nombre</strong>${s.nombre_solicitante}</div>
+          <div class="detail-item"><strong>Cédula</strong>${s.cedula_solicitante||'—'}</div>
+          <div class="detail-item"><strong>Teléfono</strong><a href="tel:${s.telefono_contacto}" style="color:var(--verde);font-weight:600;">${s.telefono_contacto}</a></div>
+          <div class="detail-item"><strong>Email</strong>${s.email_contacto ? `<a href="mailto:${s.email_contacto}" style="color:var(--morado);font-weight:600;">${s.email_contacto}</a>` : '—'}</div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Datos del Grupo</h4>
+        <div class="detail-grid">
+          <div class="detail-item"><strong>Tipo</strong>${TIPO_LABELS[s.tipo_grupo]||s.tipo_grupo}</div>
+          <div class="detail-item"><strong>Institución</strong>${s.nombre_institucion||'—'}</div>
+          <div class="detail-item"><strong>Responsable</strong>${s.responsable_principal}</div>
+          <div class="detail-item"><strong>Personas</strong>${total} total (${s.cantidad_adultos||0} adultos, ${s.cantidad_menores||0} niños)</div>
+          <div class="detail-item"><strong>Fecha Preferida</strong>${s.fecha_preferida ? fmtFecha(s.fecha_preferida, {weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '—'}</div>
+        </div>
+        ${s.observaciones ? `<div style="margin-top:10px;padding:10px;background:var(--gris-100);border-radius:var(--radio-sm);font-size:0.84rem;"><strong>Observaciones:</strong> ${s.observaciones}</div>` : ''}
+      </div>
+      <div class="divider"></div>
+      <h4 style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--texto-suave);margin-bottom:10px;">Gestión Administrativa</h4>
+      <div class="form-group">
+        <label>Estado de la Solicitud</label>
+        <div class="status-selector">
+          ${['pendiente','en_revision','aprobada','en_proceso','cumplida','denegada'].map(st =>
+            `<button type="button" class="status-btn ${st===selectedEstado?'active':''}" data-estado="${st}" onclick="selectEstado('${st}')">${ESTADO_LABELS[st]}</button>`
+          ).join('')}
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Teléfono Asignado</label>
+          <input type="tel" id="adminTelAsignado" value="${s.telefono_asignado||''}" placeholder="0412-0000000"/>
+        </div>
+        <div class="form-group">
+          <label>Fecha Confirmada</label>
+          <input type="date" id="adminFechaAsignada" value="${s.fecha_asignada||''}"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nota para el Solicitante</label>
+        <textarea id="adminNota" placeholder="Mensaje visible para el solicitante...">${s.nota_admin||''}</textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="closeModal('modalDetalle')" class="btn btn-outline">Cancelar</button>
+        <button onclick="saveDetail(${s.id})" class="btn btn-morado btn-full btn-lg" id="saveDetailBtn">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Guardar Cambios
+        </button>
+      </div>
+    `;
+  } catch(e) { document.getElementById('modalDetalleBody').innerHTML = '<p style="color:var(--rojo);">Error al cargar.</p>'; }
+}
+
+function selectEstado(estado) {
+  selectedEstado = estado;
+  document.querySelectorAll('.status-btn').forEach(b => b.classList.toggle('active', b.dataset.estado === estado));
+}
+
+async function saveDetail(id) {
+  const btn = document.getElementById('saveDetailBtn'); btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/admin/solicitudes`, {
+      method:'PATCH', headers:{'Content-Type':'application/json','Authorization':`Bearer ${getAdminToken()}`},
+      body: JSON.stringify({ id, estado:selectedEstado, nota_admin:document.getElementById('adminNota').value||null, telefono_asignado:document.getElementById('adminTelAsignado').value||null, fecha_asignada:document.getElementById('adminFechaAsignada').value||null })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error||'Error.','error'); return; }
+    toast('Solicitud actualizada.','success');
+    closeModal('modalDetalle');
+    loadSolicitudesAdmin(currentEstadoFilter==='todos'?null:currentEstadoFilter);
+    loadDashboard();
+  } catch { toast('Error de conexión.','error'); }
+  finally { btn.disabled=false; }
+}
+document.getElementById('modalDetalle').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('modalDetalle'); });
+
+// ── NOTICIAS ──
+function previewNoticiaImgUrl() {
+  const url = document.getElementById('noticiaImagen').value.trim();
+  const wrap = document.getElementById('imgPreviewWrap');
+  document.getElementById('imgPreview').src = url;
+  wrap.classList.toggle('active', !!url);
+}
+let noticiaImagenClave = null;
+
+function elegirImagenNoticia() {
+  elegirImagen(medio => {
+    noticiaImagenClave = medio.clave;
+    document.getElementById('noticiaImagenNom').textContent = medio.clave.split('/').pop();
+    document.getElementById('imgPreview').src = medio.url;
+    document.getElementById('imgPreviewWrap').classList.add('active');
+  }, 'noticias');
+}
+
+function quitarImagenNoticia() {
+  noticiaImagenClave = null;
+  document.getElementById('noticiaImagenNom').textContent = 'Ninguna imagen elegida';
+  document.getElementById('noticiaImagen').value = '';
+  document.getElementById('imgPreviewWrap').classList.remove('active');
+}
+
+async function publicarNoticia() {
+  const titulo = document.getElementById('noticiaTitulo').value.trim();
+  if (!titulo) { toast('Ingresa un título.','error'); return; }
+  try {
+    const res = await fetch(API+'/admin/noticias', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${getAdminToken()}`},
+      body: JSON.stringify({
+        titulo,
+        contenido: document.getElementById('noticiaContenido').value.trim(),
+        imagen_url: document.getElementById('noticiaImagen').value.trim() || null,
+        imagen_clave: noticiaImagenClave,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    document.getElementById('noticiaTitulo').value='';
+    document.getElementById('noticiaContenido').value='';
+    quitarImagenNoticia();
+    toast('¡Noticia publicada!','success');
+    renderNoticiasAdmin();
+  } catch (err) { toast(err.message||'Error.','error'); }
+}
+async function eliminarNoticia(id) {
+  if (!confirm('¿Eliminar esta noticia?')) return;
+  try {
+    const res = await fetch(API+'/admin/noticias?id='+id, { method:'DELETE', headers:{'Authorization':`Bearer ${getAdminToken()}`} });
+    if (!res.ok) throw new Error();
+    toast('Eliminada.','success'); renderNoticiasAdmin();
+  } catch { toast('Error.','error'); }
+}
+async function renderNoticiasAdmin() {
+  const container = document.getElementById('noticiasAdminList');
+  container.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(API+'/admin/noticias', { headers:{'Authorization':`Bearer ${getAdminToken()}`} });
+    const data = await res.json();
+    if (!data.length) {
+      container.innerHTML = `<div class="empty-state"><svg class="icon-empty" width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg><h3>No hay publicaciones</h3></div>`; return;
+    }
+    container.innerHTML = data.map(n => {
+      const fecha = fmtFecha(n.created_at, {day:'numeric',month:'long',year:'numeric'});
+      return `<div class="noticia-admin-card">
+        ${n.imagen_url?`<img src="${n.imagen_url}" alt="${n.titulo}"/>`:''}
+        <div class="noticia-admin-info">
+          <h4>${n.titulo}</h4>
+          <p>${n.contenido?(n.contenido.length>120?n.contenido.substring(0,120)+'...':n.contenido):'<em>Sin descripción</em>'}</p>
+          <span class="noticia-date"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${fecha}</span>
+        </div>
+        <button onclick="eliminarNoticia(${n.id})" class="btn btn-sm btn-outline" style="flex-shrink:0;color:var(--rojo);border-color:var(--rojo);">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m5 0V4a1 1 0 011-1h2a1 1 0 011 1v2"/></svg>
+          Eliminar
+        </button>
+      </div>`;
+    }).join('');
+  } catch { container.innerHTML = '<p style="color:var(--rojo);text-align:center;padding:20px;">Error al cargar.</p>'; }
+}
+
+// ── REPORTES PDF ──
+async function generarReportePDF(tipo) {
+  toast('Generando PDF, por favor espera...', 'info');
+  try {
+    const desde = document.getElementById('reporteDesde').value;
+    const hasta = document.getElementById('reporteHasta').value;
+    let url = `${API}/admin/reportes`;
+    const params = new URLSearchParams();
+    if (desde) params.set('desde', desde + 'T00:00:00');
+    if (hasta) params.set('hasta', hasta + 'T23:59:59');
+    if ([...params].length) url += '?' + params.toString();
+
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${getAdminToken()}` } });
+    if (!res.ok) { toast('Error al obtener datos del reporte.', 'error'); return; }
+    const data = await res.json();
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // Header
+    doc.setFillColor(39, 38, 116);
+    doc.rect(0, 0, pageW, 35, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('TURISTEANDO EN CIUDAD BOLÍVAR', pageW/2, 14, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Dirección de Turismo Municipal — Alcaldía Angostura del Orinoco', pageW/2, 22, { align: 'center' });
+    doc.text(`Reporte ${tipo === 'general' ? 'General' : 'Detallado'} de Solicitudes`, pageW/2, 30, { align: 'center' });
+
+    y = 45;
+    doc.setTextColor(0, 0, 0);
+
+    // Info del reporte
+    doc.setFontSize(9);
+    doc.setTextColor(100, 97, 138);
+    const generadoEn = fmtFecha(new Date().toISOString(), { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    doc.text(`Generado el: ${generadoEn}`, 14, y);
+    if (desde || hasta) {
+      y += 5;
+      doc.text(`Período: ${desde || 'inicio'} → ${hasta || 'hoy'}`, 14, y);
+    }
+    y += 10;
+
+    // Resumen estadístico
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(39, 38, 116);
+    doc.text('RESUMEN ESTADÍSTICO', 14, y);
+    y += 8;
+
+    const { resumen } = data;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(0, 0, 0);
+
+    const stats = [
+      ['Total de Solicitudes', resumen.total_solicitudes],
+      ['Total de Personas Atendidas', resumen.total_personas],
+    ];
+    stats.forEach(([label, val]) => {
+      doc.setFont(undefined, 'bold'); doc.text(label + ':', 14, y);
+      doc.setFont(undefined, 'normal'); doc.text(String(val), 85, y);
+      y += 6;
+    });
+
+    y += 4;
+    doc.setFont(undefined, 'bold');
+    doc.text('Por Estado:', 14, y); y += 6;
+    doc.setFont(undefined, 'normal');
+    const estadoLabels = { pendiente:'Pendientes', en_revision:'En Revisión', aprobada:'Aprobadas', denegada:'Denegadas', en_proceso:'En Proceso', cumplida:'Cumplidas' };
+    Object.entries(resumen.por_estado).forEach(([est, cnt]) => {
+      doc.text(`  • ${estadoLabels[est]||est}: ${cnt}`, 14, y); y += 5;
+    });
+
+    y += 4;
+    doc.setFont(undefined, 'bold');
+    doc.text('Por Ruta:', 14, y); y += 6;
+    doc.setFont(undefined, 'normal');
+    Object.entries(resumen.por_ruta).forEach(([ruta, info]) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.text(`  • ${ruta}: ${info.total} solicitudes (${info.personas} personas)`, 14, y); y += 5;
+    });
+
+    if (tipo === 'detallado') {
+      y += 8;
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(39, 38, 116);
+      doc.text('LISTADO DETALLADO DE SOLICITUDES', 14, y);
+      y += 8;
+
+      data.solicitudes.forEach((s, i) => {
+        if (y > 255) { doc.addPage(); y = 20; }
+        doc.setFillColor(240, 238, 245);
+        doc.rect(14, y-4, pageW-28, 6, 'F');
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(39, 38, 116);
+        doc.text(`#${s.id} — ${s.nombre_solicitante}`, 16, y);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(100, 97, 138);
+        const estado = estadoLabels[s.estado]||s.estado;
+        doc.text(estado, pageW-16, y, { align:'right' });
+        y += 7;
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(8);
+        const total = (+s.cantidad_adultos||0) + (+s.cantidad_menores||0);
+        const detalles = [
+          `Ruta: ${s.ruta_nombre||'—'}`,
+          `Cédula: ${s.cedula_solicitante||'—'} | Tel: ${s.telefono_contacto||'—'}`,
+          `Tipo: ${TIPO_LABELS[s.tipo_grupo]||s.tipo_grupo}${s.nombre_institucion?' — '+s.nombre_institucion:''}`,
+          `Personas: ${total} (${s.cantidad_adultos||0} adultos, ${s.cantidad_menores||0} niños)`,
+          s.fecha_preferida ? `Fecha preferida: ${fmtFecha(s.fecha_preferida, {})}` : '',
+        ].filter(Boolean);
+        detalles.forEach(d => {
+          if (y > 275) { doc.addPage(); y = 20; }
+          doc.text(d, 16, y); y += 4.5;
+        });
+        y += 4;
+      });
+    }
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i=1; i<=pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8); doc.setTextColor(150);
+      doc.text(`Página ${i} de ${pageCount} — Sistema Turisteando CBO`, pageW/2, doc.internal.pageSize.getHeight()-8, { align:'center' });
+    }
+
+    const fechaArchivo = new Date().toISOString().slice(0,10);
+    doc.save(`reporte-${tipo}-turisteando-${fechaArchivo}.pdf`);
+    toast('¡PDF generado y descargado!', 'success');
+  } catch (err) {
+    console.error(err);
+    toast('Error al generar el PDF.', 'error');
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+//  UTILIDADES COMPARTIDAS
+// ════════════════════════════════════════════════════════════
+
+function esc(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c => (
+    { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+  ));
+}
+function auth() { return { 'Authorization': `Bearer ${getAdminToken()}` }; }
+function authJson() { return { 'Content-Type':'application/json', ...auth() }; }
+function pesoLegible(bytes) {
+  const b = Number(bytes) || 0;
+  return b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+}
+
+// ════════════════════════════════════════════════════════════
+//  BIBLIOTECA DE IMÁGENES (Cloudflare R2)
+// ════════════════════════════════════════════════════════════
+
+let medios = [];
+let r2Configurado = true;
+let alElegirImagen = null;   // callback del selector
+
+const AVISO_SIN_R2 = `
+  <div class="aviso-config">
+    <strong>Falta crear el bucket de imágenes.</strong><br/>
+    Entra a Cloudflare → <em>R2 Object Storage</em> → <em>Create bucket</em> y llámalo
+    <code>turisteando-media</code>. Luego, en tu proyecto de Pages →
+    <em>Settings → Bindings → R2 bucket</em>, agrega uno con nombre de variable
+    <code>MEDIA</code> apuntando a ese bucket, y vuelve a desplegar.
+    Mientras tanto, todo lo demás del panel funciona con normalidad.
+  </div>`;
+
+async function loadMedios() {
+  const carpeta = document.getElementById('filtroCarpeta')?.value || 'todas';
+  const cont = document.getElementById('galeriaMedios');
+  if (cont) cont.innerHTML = '<div class="loading-wrap" style="grid-column:1/-1;"><div class="spinner"></div></div>';
+  try {
+    const res  = await fetch(`${API}/admin/media?carpeta=${encodeURIComponent(carpeta)}`, { headers: auth() });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    medios = data.medios || [];
+    r2Configurado = data.configurado !== false;
+  } catch {
+    medios = [];
+  }
+
+  const aviso = document.getElementById('avisoR2');
+  if (aviso) aviso.innerHTML = r2Configurado ? '' : AVISO_SIN_R2;
+
+  const total = document.getElementById('mediosTotal');
+  if (total) total.textContent = medios.length ? `${medios.length} imagen${medios.length === 1 ? '' : 'es'}` : '';
+
+  if (!cont) return;
+  if (!medios.length) {
+    cont.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:30px 16px;">
+      <h3>Todavía no hay imágenes</h3>
+      <p>Sube la primera arrastrándola a la zona de arriba.</p>
+    </div>`;
+    return;
+  }
+  cont.innerHTML = medios.map(m => tarjetaMedio(m, false)).join('');
+}
+
+function tarjetaMedio(m, paraElegir) {
+  const nombre = m.clave.split('/').pop();
+  return `<div class="galeria-item" title="${esc(m.titulo || nombre)}"
+       onclick="${paraElegir ? `confirmarEleccion('${esc(m.clave)}')` : `copiarClave('${esc(m.clave)}')`}">
+    <img src="${esc(m.url)}" alt="${esc(m.titulo || nombre)}" loading="lazy"/>
+    <span class="pie">${esc(m.carpeta)} · ${esc(pesoLegible(m.bytes))}</span>
+    ${paraElegir ? '' : `<button class="borrar" title="Eliminar" onclick="event.stopPropagation();borrarMedio('${esc(m.clave)}')">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>`}
+  </div>`;
+}
+
+function copiarClave(clave) {
+  navigator.clipboard?.writeText(clave);
+  toast('Clave copiada al portapapeles.', 'info');
+}
+
+async function borrarMedio(clave) {
+  if (!confirm('¿Eliminar esta imagen? Desaparecerá de donde se esté usando.')) return;
+  try {
+    const res = await fetch(`${API}/admin/media?clave=${encodeURIComponent(clave)}`, { method:'DELETE', headers: auth() });
+    if (!res.ok) throw new Error();
+    toast('Imagen eliminada.', 'success');
+    loadMedios();
+  } catch { toast('No se pudo eliminar la imagen.', 'error'); }
+}
+
+async function subirUna(archivo, carpeta) {
+  const form = new FormData();
+  form.append('archivo', archivo);
+  form.append('carpeta', carpeta);
+  form.append('titulo', archivo.name);
+  const res  = await fetch(`${API}/admin/upload`, { method:'POST', headers: auth(), body: form });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al subir la imagen.');
+  return data;
+}
+
+async function subirArchivos(archivos) {
+  if (!archivos || !archivos.length) return;
+  const carpetaSel = document.getElementById('filtroCarpeta')?.value;
+  const carpeta = (!carpetaSel || carpetaSel === 'todas') ? 'general' : carpetaSel;
+  const barra = document.getElementById('subidaProgreso');
+  let listas = 0;
+
+  for (const archivo of archivos) {
+    if (barra) barra.innerHTML = `<p style="font-size:0.85rem;color:var(--texto-suave);">Subiendo ${esc(archivo.name)} (${listas + 1} de ${archivos.length})…</p>`;
+    try {
+      await subirUna(archivo, carpeta);
+      listas++;
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  }
+  if (barra) barra.innerHTML = '';
+  document.getElementById('archivoInput').value = '';
+  if (listas) toast(`${listas} imagen${listas === 1 ? '' : 'es'} subida${listas === 1 ? '' : 's'}.`, 'success');
+  loadMedios();
+}
+
+// ── Selector reutilizable ──
+function elegirImagen(callback, carpeta = 'general') {
+  alElegirImagen = callback;
+  document.getElementById('modalImagenes').dataset.carpeta = carpeta;
+  document.getElementById('modalImagenes').classList.add('active');
+  pintarGaleriaModal();
+}
+
+async function pintarGaleriaModal() {
+  const cont = document.getElementById('galeriaModal');
+  cont.innerHTML = '<div class="loading-wrap" style="grid-column:1/-1;"><div class="spinner"></div></div>';
+  try {
+    const res  = await fetch(`${API}/admin/media?carpeta=todas`, { headers: auth() });
+    const data = await res.json();
+    medios = data.medios || [];
+    r2Configurado = data.configurado !== false;
+  } catch { medios = []; }
+
+  if (!medios.length) {
+    cont.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:24px 16px;">
+      <h3>No hay imágenes todavía</h3>
+      <p>${r2Configurado ? 'Sube la primera con el recuadro de arriba.' : 'Falta crear el bucket en Cloudflare R2.'}</p>
+    </div>`;
+    return;
+  }
+  cont.innerHTML = medios.map(m => tarjetaMedio(m, true)).join('');
+}
+
+async function subirDesdeModal(archivos) {
+  if (!archivos || !archivos.length) return;
+  const carpeta = document.getElementById('modalImagenes').dataset.carpeta || 'general';
+  const barra = document.getElementById('modalSubidaProgreso');
+  barra.innerHTML = '<p style="font-size:0.85rem;color:var(--texto-suave);">Subiendo…</p>';
+  try {
+    const subida = await subirUna(archivos[0], carpeta);
+    barra.innerHTML = '';
+    document.getElementById('archivoInputModal').value = '';
+    toast('Imagen subida.', 'success');
+    confirmarEleccion(subida.clave);
+  } catch (err) {
+    barra.innerHTML = '';
+    toast(err.message, 'error');
+  }
+}
+
+function confirmarEleccion(clave) {
+  const medio = medios.find(m => m.clave === clave) || { clave, url: '/media/' + clave };
+  closeModal('modalImagenes');
+  if (typeof alElegirImagen === 'function') alElegirImagen(medio);
+  alElegirImagen = null;
+}
+
+// Arrastrar y soltar
+(function activarArrastre() {
+  const zona = document.getElementById('zonaSoltar');
+  if (!zona) return;
+  ['dragenter','dragover'].forEach(ev => zona.addEventListener(ev, e => {
+    e.preventDefault(); zona.classList.add('encima');
+  }));
+  ['dragleave','drop'].forEach(ev => zona.addEventListener(ev, e => {
+    e.preventDefault(); zona.classList.remove('encima');
+  }));
+  zona.addEventListener('drop', e => subirArchivos(e.dataTransfer.files));
+})();
+
+// ════════════════════════════════════════════════════════════
+//  RUTAS: PORTADA Y DATOS DEL RECORRIDO
+// ════════════════════════════════════════════════════════════
+
+let rutasAdmin = [];
+
+async function loadRutasAdmin() {
+  const cont = document.getElementById('rutasAdminList');
+  cont.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(`${API}/admin/rutas`, { headers: auth() });
+    rutasAdmin = await res.json();
+    if (!res.ok) throw new Error();
+  } catch {
+    cont.innerHTML = '<p style="color:var(--rojo);padding:16px;">No se pudieron cargar las rutas.</p>';
+    return;
+  }
+
+  cont.innerHTML = rutasAdmin.map(r => `
+    <div class="ficha">
+      <div class="ficha-portada" id="portadaRuta${r.id}">
+        ${r.imagen_url ? `<img src="${esc(r.imagen_url)}" alt="${esc(r.nombre)}"/>` : 'Sin portada<br/>(se usa la imagen de reserva)'}
+      </div>
+      <div class="ficha-cuerpo">
+        <h4 style="color:${esc(r.color || '#6C2EB9')}">${esc(r.nombre)}</h4>
+        <p>${esc(r.descripcion || 'Sin descripción')}</p>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>Duración estimada (minutos)</label>
+            <input type="number" min="0" max="600" id="rutaDur${r.id}" value="${r.duracion_min ?? ''}" placeholder="Ej.: 120"/>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>Punto de encuentro</label>
+            <input type="text" id="rutaPunto${r.id}" value="${esc(r.punto_encuentro || '')}" placeholder="Ej.: Plaza Bolívar, frente a la Catedral"/>
+          </div>
+        </div>
+        <div class="ficha-acciones">
+          <button class="btn btn-sm btn-outline" onclick="cambiarPortadaRuta(${r.id})">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-5L5 21"/></svg>
+            ${r.imagen_url ? 'Cambiar portada' : 'Poner portada'}
+          </button>
+          <button class="btn btn-sm btn-morado" onclick="guardarRuta(${r.id})">Guardar cambios</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function cambiarPortadaRuta(id) {
+  elegirImagen(async medio => {
+    await guardarRuta(id, { imagen_clave: medio.clave });
+    document.getElementById(`portadaRuta${id}`).innerHTML =
+      `<img src="${esc(medio.url)}" alt="Portada de la ruta"/>`;
+  }, 'rutas');
+}
+
+async function guardarRuta(id, extra = {}) {
+  const dur   = document.getElementById(`rutaDur${id}`)?.value;
+  const punto = document.getElementById(`rutaPunto${id}`)?.value;
+  try {
+    const res = await fetch(`${API}/admin/rutas`, {
+      method:'PATCH', headers: authJson(),
+      body: JSON.stringify({
+        id,
+        duracion_min: dur === '' ? null : Number(dur),
+        punto_encuentro: punto || null,
+        ...extra,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    toast('Ruta actualizada.', 'success');
+  } catch (err) { toast(err.message || 'No se pudo guardar la ruta.', 'error'); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  ATRACTIVOS
+// ════════════════════════════════════════════════════════════
+
+let atrImagenClave = null;
+
+async function loadAtractivosAdmin() {
+  const cont = document.getElementById('atractivosAdminList');
+  cont.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  let lista = [];
+  try {
+    const res = await fetch(`${API}/admin/atractivos`, { headers: auth() });
+    lista = await res.json();
+    if (!res.ok) throw new Error();
+  } catch {
+    cont.innerHTML = '<p style="color:var(--rojo);padding:16px;">No se pudieron cargar los atractivos.</p>';
+    return;
+  }
+
+  if (!lista.length) {
+    cont.innerHTML = '<div class="empty-state"><h3>Aún no hay atractivos</h3><p>Agrega el primero con el formulario de arriba.</p></div>';
+    return;
+  }
+
+  cont.innerHTML = lista.map(a => `
+    <div class="ficha">
+      <div class="ficha-portada">
+        ${a.imagen_url ? `<img src="${esc(a.imagen_url)}" alt="${esc(a.nombre)}"/>` : 'Sin imagen'}
+      </div>
+      <div class="ficha-cuerpo">
+        <h4>${esc(a.nombre)} ${a.destacado ? '<span class="badge badge-cumplida" style="margin-left:6px;">Destacado</span>' : ''}</h4>
+        <p>${esc(a.descripcion || 'Sin descripción')}</p>
+        <p style="font-size:0.76rem;color:var(--texto-claro);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;">${esc(a.categoria)}${a.publicado ? '' : ' · oculto'}</p>
+        <div class="ficha-acciones">
+          <button class="btn btn-sm btn-outline" onclick="cambiarImagenAtractivo(${a.id})">
+            ${a.imagen_url ? 'Cambiar imagen' : 'Poner imagen'}
+          </button>
+          <button class="btn btn-sm btn-outline" onclick="alternarAtractivo(${a.id}, ${!a.destacado}, null)">
+            ${a.destacado ? 'Quitar destacado' : 'Destacar'}
+          </button>
+          <button class="btn btn-sm btn-outline" onclick="alternarAtractivo(${a.id}, null, ${!a.publicado})">
+            ${a.publicado ? 'Ocultar del sitio' : 'Publicar'}
+          </button>
+          <button class="btn btn-sm btn-outline" style="color:var(--rojo);border-color:var(--rojo);" onclick="borrarAtractivo(${a.id})">Eliminar</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function crearAtractivo() {
+  const nombre = document.getElementById('atrNombre').value.trim();
+  if (!nombre) { toast('Escribe el nombre del atractivo.', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/admin/atractivos`, {
+      method:'POST', headers: authJson(),
+      body: JSON.stringify({
+        nombre,
+        descripcion: document.getElementById('atrDescripcion').value.trim(),
+        categoria:   document.getElementById('atrCategoria').value,
+        destacado:   document.getElementById('atrDestacado').checked,
+        imagen_clave: atrImagenClave,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    document.getElementById('atrNombre').value = '';
+    document.getElementById('atrDescripcion').value = '';
+    document.getElementById('atrDestacado').checked = false;
+    document.getElementById('atrImagenNom').textContent = 'Ninguna imagen elegida';
+    atrImagenClave = null;
+    toast('Atractivo agregado.', 'success');
+    loadAtractivosAdmin();
+  } catch (err) { toast(err.message || 'No se pudo agregar.', 'error'); }
+}
+
+function cambiarImagenAtractivo(id) {
+  elegirImagen(async medio => {
+    await patchAtractivo({ id, imagen_clave: medio.clave });
+    loadAtractivosAdmin();
+  }, 'atractivos');
+}
+
+async function alternarAtractivo(id, destacado, publicado) {
+  const cuerpo = { id };
+  if (destacado !== null && destacado !== undefined) cuerpo.destacado = destacado;
+  if (publicado !== null && publicado !== undefined) cuerpo.publicado = publicado;
+  await patchAtractivo(cuerpo);
+  loadAtractivosAdmin();
+}
+
+async function patchAtractivo(cuerpo) {
+  try {
+    const res = await fetch(`${API}/admin/atractivos`, { method:'PATCH', headers: authJson(), body: JSON.stringify(cuerpo) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    toast('Atractivo actualizado.', 'success');
+  } catch (err) { toast(err.message || 'No se pudo actualizar.', 'error'); }
+}
+
+async function borrarAtractivo(id) {
+  if (!confirm('¿Eliminar este atractivo del sitio?')) return;
+  try {
+    const res = await fetch(`${API}/admin/atractivos?id=${id}`, { method:'DELETE', headers: auth() });
+    if (!res.ok) throw new Error();
+    toast('Atractivo eliminado.', 'success');
+    loadAtractivosAdmin();
+  } catch { toast('No se pudo eliminar.', 'error'); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  BANDEJA DE MENSAJES
+// ════════════════════════════════════════════════════════════
+
+let hilosAdmin = [];
+let hiloAbierto = null;
+let sondeoBandeja = null;
+
+const ETIQUETA_HILO = { abierta:'Espera respuesta', respondida:'Respondida', cerrada:'Cerrada' };
+
+function detenerSondeoBandeja() {
+  clearInterval(sondeoBandeja);
+  sondeoBandeja = null;
+}
+
+async function loadBandeja() {
+  const cont = document.getElementById('bandejaLista');
+  const estado = document.getElementById('msgFiltroEstado')?.value || '';
+  const tipo   = document.getElementById('msgFiltroTipo')?.value || '';
+  const params = new URLSearchParams();
+  if (estado) params.set('estado', estado);
+  if (tipo)   params.set('tipo', tipo);
+
+  try {
+    const res  = await fetch(`${API}/admin/conversaciones?${params}`, { headers: auth() });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    hilosAdmin = data.hilos || [];
+    pintarContadorMensajes(data.sin_leer);
+  } catch {
+    cont.innerHTML = '<p style="color:var(--texto-suave);font-size:0.85rem;padding:14px;">No se pudo cargar la bandeja. Comprueba que ejecutaste la migración de la base de datos.</p>';
+    return;
+  }
+
+  if (!hilosAdmin.length) {
+    cont.innerHTML = '<div class="empty-state" style="padding:26px 14px;"><h3>Sin conversaciones</h3><p>Aquí aparecerán los mensajes que envíen los solicitantes.</p></div>';
+    return;
+  }
+
+  cont.innerHTML = hilosAdmin.map(h => {
+    const sinLeer = Number(h.no_leidos) || 0;
+    return `<button class="bandeja-hilo ${sinLeer ? 'sinleer' : ''} ${hiloAbierto === h.id ? 'activo' : ''}" onclick="abrirHilo(${h.id})">
+      <b>${esc(h.asunto || 'Conversación')}</b>
+      <span class="quien">${esc(h.usuario_nombre || 'Solicitante')}${h.nombre_institucion ? ' · ' + esc(h.nombre_institucion) : ''}</span>
+      <span class="previo">${esc(h.ultimo_cuerpo || 'Sin mensajes')}</span>
+      <span style="display:flex;align-items:center;gap:6px;margin-top:7px;">
+        <span class="badge ${h.tipo === 'soporte' ? 'badge-en_revision' : 'badge-cumplida'}">${h.tipo === 'soporte' ? 'Soporte' : 'Rutas'}</span>
+        <span style="font-size:0.72rem;color:var(--texto-claro);">${esc(ETIQUETA_HILO[h.estado] || h.estado)}</span>
+        ${sinLeer ? `<span style="margin-left:auto;background:var(--magenta);color:#fff;border-radius:999px;padding:1px 8px;font-size:0.68rem;font-weight:800;">${sinLeer}</span>` : ''}
+      </span>
+    </button>`;
+  }).join('');
+}
+
+function pintarContadorMensajes(sinLeer) {
+  const badge = document.getElementById('msgCount');
+  if (!badge) return;
+  const n = Number(sinLeer) || 0;
+  badge.textContent = n;
+  badge.style.display = n ? 'inline-flex' : 'none';
+}
+
+async function abrirHilo(id) {
+  hiloAbierto = id;
+  document.querySelectorAll('.bandeja-hilo').forEach(b => b.classList.remove('activo'));
+  await refrescarHilo();
+  loadBandeja();
+  detenerSondeoBandeja();
+  sondeoBandeja = setInterval(refrescarHilo, 20000);
+}
+
+async function refrescarHilo() {
+  if (!hiloAbierto) return;
+  const panel = document.getElementById('bandejaPanel');
+  try {
+    const res  = await fetch(`${API}/mensajes?conversacion_id=${hiloAbierto}`, { headers: auth() });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    pintarHilo(data);
+  } catch {
+    panel.innerHTML = '<p style="color:var(--rojo);padding:14px;">No se pudo abrir la conversación.</p>';
+  }
+}
+
+function pintarHilo({ conversacion, mensajes }) {
+  const hilo = hilosAdmin.find(h => h.id === conversacion.id) || {};
+  const panel = document.getElementById('bandejaPanel');
+  const previo = document.getElementById('chatCuerpoAdmin');
+  const abajo = !previo || (previo.scrollHeight - previo.scrollTop - previo.clientHeight < 60);
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px;">
+      <div style="min-width:0;">
+        <h3 style="font-size:1.05rem;margin-bottom:3px;">${esc(conversacion.asunto || 'Conversación')}</h3>
+        <p style="font-size:0.82rem;color:var(--texto-suave);">
+          ${esc(hilo.usuario_nombre || '')}${hilo.usuario_email ? ' · ' + esc(hilo.usuario_email) : ''}${hilo.usuario_telefono ? ' · ' + esc(hilo.usuario_telefono) : ''}
+        </p>
+        ${conversacion.solicitud_id ? `<p style="font-size:0.8rem;color:var(--morado);font-weight:700;margin-top:4px;">Sobre la solicitud N.º ${conversacion.solicitud_id}${hilo.ruta_nombre ? ' · ' + esc(hilo.ruta_nombre) : ''}</p>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${conversacion.solicitud_id ? `<button class="btn btn-sm btn-outline" onclick="openDetail(${conversacion.solicitud_id})">Ver solicitud</button>` : ''}
+        <button class="btn btn-sm btn-outline" onclick="cambiarEstadoHilo(${conversacion.id}, '${conversacion.estado === 'cerrada' ? 'abierta' : 'cerrada'}')">
+          ${conversacion.estado === 'cerrada' ? 'Reabrir' : 'Cerrar conversación'}
+        </button>
+      </div>
+    </div>
+
+    <div class="chat-cuerpo" id="chatCuerpoAdmin">
+      ${mensajes.map(m => {
+        const mio = m.autor_rol === 'admin';
+        const cuando = fmtFecha(m.created_at, { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        return `<div class="burbuja ${mio ? 'mia' : 'ellos'}">
+          <span class="quien">${mio ? 'Dirección de Turismo' : esc(m.autor_nombre || 'Solicitante')}</span>
+<span class="texto">${esc(m.cuerpo)}</span>${m.adjunto_url ? `<a href="${esc(m.adjunto_url)}" target="_blank" rel="noopener" style="display:block;margin-top:8px;"><img src="${esc(m.adjunto_url)}" alt="Adjunto" style="max-width:100%;border-radius:10px;"/></a>` : ''}
+          <span class="cuando">${esc(cuando)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <form class="chat-envio" onsubmit="responderHilo(event)">
+      <textarea id="respuestaTexto" placeholder="Escribe tu respuesta al solicitante..." maxlength="4000" required></textarea>
+      <button type="submit" class="btn btn-morado" id="respuestaBtn" style="height:52px;">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        Responder
+      </button>
+    </form>`;
+
+  const cuerpo = document.getElementById('chatCuerpoAdmin');
+  if (abajo) cuerpo.scrollTop = cuerpo.scrollHeight;
+}
+
+async function responderHilo(e) {
+  e.preventDefault();
+  const campo = document.getElementById('respuestaTexto');
+  const texto = campo.value.trim();
+  if (!texto || !hiloAbierto) return;
+
+  const btn = document.getElementById('respuestaBtn');
+  btn.disabled = true;
+  try {
+    const res  = await fetch(`${API}/mensajes`, {
+      method:'POST', headers: authJson(),
+      body: JSON.stringify({ conversacion_id: hiloAbierto, cuerpo: texto })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    campo.value = '';
+    await refrescarHilo();
+    loadBandeja();
+  } catch (err) {
+    toast(err.message || 'No se pudo enviar la respuesta.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function cambiarEstadoHilo(id, estado) {
+  try {
+    const res = await fetch(`${API}/admin/conversaciones`, {
+      method:'PATCH', headers: authJson(), body: JSON.stringify({ id, estado })
+    });
+    if (!res.ok) throw new Error();
+    toast(estado === 'cerrada' ? 'Conversación cerrada.' : 'Conversación reabierta.', 'success');
+    await refrescarHilo();
+    loadBandeja();
+  } catch { toast('No se pudo cambiar el estado.', 'error'); }
+}
+
+document.getElementById('modalImagenes').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('modalImagenes');
+});
+
+// ── INIT ──
+(function init() {
+  const token = localStorage.getItem('admin_token');
+  const user = localStorage.getItem('admin_user');
+  if (token && user) {
+    try {
+      adminUser = JSON.parse(user);
+      if (adminUser.rol === 'admin') { showAdminPanel(); return; }
+    } catch {}
+  }
+})();
+</script>
+</body>
+</html>

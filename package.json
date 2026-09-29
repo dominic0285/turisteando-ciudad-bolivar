@@ -1,0 +1,18 @@
+{
+  "name": "turisteando-app",
+  "version": "2.0.0",
+  "description": "Sistema de Gestión de Solicitudes Turísticas — Dirección de Turismo, Alcaldía del Municipio Angostura del Orinoco",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev . --compatibility-date=2024-09-23",
+    "deploy": "wrangler pages deploy . --project-name=turisteando-app",
+    "bucket:crear": "wrangler r2 bucket create turisteando-media",
+    "login": "wrangler login"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.5"
+  },
+  "devDependencies": {
+    "wrangler": "^3.78.0"
+  }
+}

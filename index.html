@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Turisteando en Ciudad Bolívar — Dirección de Turismo · Alcaldía Angostura del Orinoco</title>
+  <meta name="description" content="Solicita gratis uno de los 7 recorridos turísticos oficiales por el patrimonio histórico de Ciudad Bolívar. Dirección de Turismo de la Alcaldía del Municipio Angostura del Orinoco."/>
+  <meta name="theme-color" content="#2E134D"/>
+  <meta property="og:title" content="Turisteando en Ciudad Bolívar"/>
+  <meta property="og:description" content="7 rutas turísticas oficiales y gratuitas por la Angostura del Orinoco. Solicita la tuya en línea."/>
+  <meta property="og:image" content="/img/fotos/hero-catedral.jpg"/>
+  <meta property="og:type" content="website"/>
+  <link rel="icon" type="image/png" href="/img/marca/alcaldia-angostura.png"/>
+  <link rel="apple-touch-icon" href="/img/marca/turisteando.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="/css/main.css"/>
+  <style>
+    /* ── HERO CON FOTOGRAFÍA ── */
+    .hero { min-height: calc(100vh - 52px); display: flex; flex-direction: column; }
+    .hero-foto {
+      flex: 1; display: flex; flex-direction: column;
+      background-image: url('/img/fotos/hero-catedral.jpg');
+      background-position: center 62%;
+    }
+    .hero-cuerpo {
+      flex: 1; display: flex; flex-direction: column; justify-content: center;
+      max-width: 1080px; width: 100%; margin: 0 auto;
+      padding: 64px 24px 44px;
+    }
+    .hero-cuerpo .rotulo { margin-bottom: 16px; }
+    .hero h1 {
+      color: #fff; font-size: clamp(2rem, 5.4vw, 3.6rem);
+      max-width: 17ch; margin-bottom: 18px;
+    }
+    .hero h1 .oro { color: var(--amarillo); }
+    .hero-desc {
+      color: rgba(255,255,255,0.82); font-size: 1.02rem;
+      line-height: 1.75; max-width: 50ch; margin-bottom: 30px;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-datos {
+      display: flex; gap: 0; flex-wrap: wrap; margin-top: 48px;
+      border-top: 1px solid rgba(255,255,255,0.18); padding-top: 24px;
+    }
+    .hero-dato { padding-right: 40px; margin-right: 40px; border-right: 1px solid rgba(255,255,255,0.14); }
+    .hero-dato:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+    .hero-dato .num { font-family: var(--font-display); font-size: 2.4rem; line-height: 1; color: #fff; }
+    .hero-dato .lbl {
+      font-family: var(--font-display); font-size: 0.82rem; letter-spacing: 0.14em;
+      color: rgba(255,255,255,0.55); margin-top: 4px;
+    }
+    .hero-pie { padding: 0 16px 26px; display: flex; justify-content: center; }
+
+    /* ── SECCIONES ── */
+    .seccion { padding: 76px 24px; }
+    .seccion-clara { background: var(--fondo); }
+    .seccion-alt { background: var(--fondo-alt); }
+    .seccion-oscura { background: var(--purpura-noche); }
+    .cab { max-width: 1080px; margin: 0 auto 42px; }
+    .cab.centrada { text-align: center; }
+    .cab.centrada .rotulo { justify-content: center; }
+    .cab h2 { font-size: clamp(1.5rem, 3.4vw, 2.3rem); margin: 12px 0 12px; }
+    .cab p { color: var(--texto-suave); max-width: 62ch; font-size: 0.98rem; line-height: 1.75; }
+    .cab.centrada p { margin-left: auto; margin-right: auto; }
+    .seccion-oscura .cab h2 { color: #fff; }
+    .seccion-oscura .cab p { color: rgba(255,255,255,0.66); }
+
+    /* ── RUTAS ── */
+    .rutas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 22px; max-width: 1080px; margin: 0 auto; }
+    .ruta-card {
+      background: var(--blanco); border-radius: var(--radio-lg); overflow: hidden;
+      border: 1px solid var(--gris-200); box-shadow: var(--sombra);
+      transition: transform var(--trans), box-shadow var(--trans), border-color var(--trans);
+      display: flex; flex-direction: column;
+    }
+    .ruta-card:hover { transform: translateY(-6px); box-shadow: var(--sombra-fuerte); border-color: transparent; }
+    .ruta-card-body { padding: 22px 24px 24px; flex: 1; display: flex; flex-direction: column; }
+    .ruta-card h3 { font-size: 1.02rem; font-weight: 800; margin-bottom: 8px; color: var(--purpura-noche); }
+    .ruta-card p { font-size: 0.86rem; color: var(--texto-suave); line-height: 1.7; margin-bottom: 18px; flex: 1; }
+    .ruta-link {
+      font-size: 0.84rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 999px; transition: gap var(--trans); align-self: flex-start;
+    }
+    .ruta-link:hover { gap: 11px; }
+
+    /* ── ATRACTIVOS ── */
+    .atractivos-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+    /* ── PRUEBA SOCIAL ── */
+    .franja-social { position: relative; min-height: 340px; display: flex; align-items: center; background-image: url('/img/fotos/recorridos-grupo.jpg'); background-position: center 40%; }
+    .franja-social .contenido { max-width: 1080px; margin: 0 auto; padding: 60px 24px; width: 100%; }
+    .franja-social h2 { color: #fff; font-size: clamp(1.4rem, 3.2vw, 2.1rem); max-width: 20ch; margin-bottom: 14px; }
+    .franja-social p { color: rgba(255,255,255,0.8); max-width: 48ch; font-size: 0.96rem; line-height: 1.75; }
+
+    /* ── PASOS ── */
+    .pasos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; max-width: 1000px; margin: 0 auto 42px; }
+    .paso {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radio); padding: 24px 22px;
+    }
+    .paso .n { font-family: var(--font-display); font-size: 2.2rem; line-height: 1; color: var(--amarillo); }
+    .paso b { display: block; font-family: var(--font-titulo); font-weight: 800; color: #fff; font-size: 0.95rem; margin: 8px 0 6px; }
+    .paso span { font-size: 0.84rem; color: rgba(255,255,255,0.6); line-height: 1.6; }
+
+    /* ── AVISO SIN NOTICIAS ── */
+    .noticias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px; max-width: 1080px; margin: 0 auto; }
+
+    @media (max-width: 700px) {
+      .hero { min-height: auto; }
+      .hero-cuerpo { padding: 48px 20px 34px; }
+      .hero-datos { gap: 22px; }
+      .hero-dato { padding-right: 22px; margin-right: 0; border-right: 0; }
+      .hero-dato .num { font-size: 1.9rem; }
+      .seccion { padding: 56px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ CINTILLO SUPERIOR INSTITUCIONAL ══ -->
+<div class="barra-institucional">
+  <img src="/img/marca/venezuela.png" alt="República Bolivariana de Venezuela"/>
+  <img src="/img/marca/gobernacion-bolivar.png" alt="Gobernación del Estado Bolívar"/>
+  <img src="/img/marca/alcaldia-angostura.png" alt="Alcaldía del Municipio Angostura del Orinoco — Ciudad Bolívar, Capital que renace"/>
+</div>
+
+<div class="nav-sticky">
+<nav class="navbar">
+  <a href="/" class="navbar-logo">
+    <img src="/img/marca/turisteando.png" alt="Turisteando en Ciudad Bolívar" class="navbar-logo-img"/>
+    <div class="navbar-brand">Turisteando en Ciudad Bolívar <span>Dirección de Turismo · Municipio Heres</span></div>
+  </a>
+  <div class="navbar-links">
+    <a href="#rutas">Rutas</a>
+    <a href="#atractivos">Atractivos</a>
+    <a href="#noticias">Noticias</a>
+    <a href="#contacto">Contacto</a>
+    <a href="/portal.html" class="btn btn-naranja btn-sm">Solicitar recorrido</a>
+  </div>
+  <button class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Abrir menú"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-mobile-menu" id="mobileMenu">
+  <a href="#rutas" onclick="toggleMobileMenu()">Las 7 rutas</a>
+  <a href="#atractivos" onclick="toggleMobileMenu()">Atractivos de la ciudad</a>
+  <a href="#noticias" onclick="toggleMobileMenu()">Noticias y eventos</a>
+  <a href="#contacto" onclick="toggleMobileMenu()">Contacto</a>
+  <a href="/portal.html" onclick="toggleMobileMenu()">Solicitar recorrido</a>
+  <a href="/admin.html" onclick="toggleMobileMenu()" style="opacity:0.5;font-size:0.82rem;">Acceso administrativo</a>
+</div>
+</div>
+
+
+<!-- ══ PORTADA ══ -->
+<header class="hero">
+  <div class="hero-foto foto-fondo">
+    <div class="hero-cuerpo">
+      <span class="rotulo rotulo-claro">7 rutas oficiales · 100 % gratuitas</span>
+      <h1>Conocer, aprender y disfrutar la <span class="oro">Angostura del Orinoco</span></h1>
+      <p class="hero-desc">Recorridos guiados por el casco histórico, el Paseo Orinoco y el patrimonio de una ciudad con 262 años de historia. Solicita el tuyo para tu escuela, institución o grupo familiar.</p>
+      <div class="hero-actions">
+        <a href="/portal.html" class="btn btn-naranja btn-lg">Solicitar mi recorrido</a>
+        <a href="#rutas" class="btn btn-outline-white btn-lg">Ver las 7 rutas</a>
+      </div>
+      <div class="hero-datos">
+        <div class="hero-dato"><div class="num">7</div><div class="lbl">RUTAS TURÍSTICAS</div></div>
+        <div class="hero-dato"><div class="num">262</div><div class="lbl">AÑOS DE HISTORIA</div></div>
+        <div class="hero-dato"><div class="num">GRATIS</div><div class="lbl">PARA TU GRUPO</div></div>
+      </div>
+    </div>
+    <div class="hero-pie">
+      <div class="cintillo cintillo-sm">
+        <img src="/img/marca/turismo-venezuela.png" alt="Turismo Venezuela"/>
+        <img src="/img/marca/bolivar-tierra-de-encuentro.png" alt="Bolívar, Tierra de Encuentro"/>
+        <img src="/img/marca/ciudad-bolivar-paraiso.png" alt="Ciudad Bolívar, Un Paraíso para Soñar"/>
+      </div>
+    </div>
+  </div>
+  <div class="filete"></div>
+</header>
+
+<!-- ══ RUTAS ══ -->
+<section class="seccion seccion-clara" id="rutas">
+  <div class="cab centrada">
+    <span class="rotulo">Nuestros recorridos oficiales</span>
+    <h2>Las 7 rutas turísticas de Ciudad Bolívar</h2>
+    <p>Cada ruta está diseñada para llevar a estudiantes, familias o grupos organizados a descubrir el legado histórico, religioso, artístico y natural de la Angostura del Orinoco.</p>
+  </div>
+  <div class="rutas-grid" id="rutasGrid">
+    <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div><span>Cargando rutas...</span></div>
+  </div>
+  <div class="text-center mt-3" style="margin-top:44px;">
+    <a href="/portal.html" class="btn btn-morado btn-lg">Solicitar una ruta ahora</a>
+  </div>
+</section>
+
+<!-- ══ ATRACTIVOS ══ -->
+<section class="seccion seccion-alt" id="atractivos">
+  <div class="cab">
+    <span class="rotulo">Un paraíso para soñar</span>
+    <h2>Los atractivos que vas a conocer</h2>
+    <p>Patrimonio colonial, el río más caudaloso de Venezuela, arte urbano y la cocina guayanesa. Esto es lo que espera a tu grupo en cada recorrido.</p>
+  </div>
+  <div class="atractivos-grid" id="atractivosGrid"></div>
+</section>
+
+<!-- ══ PRUEBA SOCIAL ══ -->
+<section class="franja-social foto-fondo foto-fondo-suave foto-fondo-lateral">
+  <div class="contenido">
+    <span class="rotulo rotulo-claro">Ya lo estamos haciendo</span>
+    <h2 style="margin-top:14px;">Cientos de bolivarenses ya recorrieron su ciudad con nosotros</h2>
+    <p>Escuelas, liceos, universidades, consejos comunales y grupos familiares. Cada semana la Dirección de Turismo Municipal acompaña a nuevos grupos por el centro histórico de Ciudad Bolívar.</p>
+  </div>
+</section>
+
+<!-- ══ CÓMO SOLICITAR ══ -->
+<section class="seccion seccion-oscura">
+  <div class="cab centrada">
+    <span class="rotulo rotulo-claro">El proceso</span>
+    <h2>¿Cómo solicito mi recorrido?</h2>
+    <p>Sencillo, gratuito y completamente en línea. No hace falta venir a la oficina para pedirlo.</p>
+  </div>
+  <div class="pasos">
+    <div class="paso"><div class="n">1</div><b>Regístrate</b><span>Crea tu cuenta con los datos de tu institución o grupo.</span></div>
+    <div class="paso"><div class="n">2</div><b>Llena la solicitud</b><span>Elige la ruta, la fecha preferida y cuántas personas van.</span></div>
+    <div class="paso"><div class="n">3</div><b>Recibe respuesta</b><span>La Dirección revisa, confirma la fecha y te asigna un contacto.</span></div>
+    <div class="paso"><div class="n">4</div><b>¡A turistear!</b><span>Tu guía los espera en el punto de encuentro acordado.</span></div>
+  </div>
+  <div class="text-center">
+    <a href="/portal.html" class="btn btn-naranja btn-lg">Comenzar ahora</a>
+  </div>
+</section>
+
+<!-- ══ NOTICIAS ══ -->
+<section class="seccion seccion-clara" id="noticias">
+  <div class="cab centrada">
+    <span class="rotulo">Publicaciones</span>
+    <h2>Noticias y eventos</h2>
+    <p>Las últimas novedades de la Dirección de Turismo Municipal de Ciudad Bolívar.</p>
+  </div>
+  <div class="noticias-grid" id="noticiasPublicGrid">
+    <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div><span>Cargando noticias...</span></div>
+  </div>
+</section>
+
+<!-- ══ PIE INSTITUCIONAL ══ -->
+<footer class="pie-inst" id="contacto">
+  <div class="filete"></div>
+  <div class="pie-cintillo">
+    <div class="cintillo">
+      <img src="/img/marca/turismo-venezuela.png" alt="Turismo Venezuela"/>
+      <img src="/img/marca/bolivar-tierra-de-encuentro.png" alt="Bolívar, Tierra de Encuentro"/>
+      <img src="/img/marca/ciudad-bolivar-paraiso.png" alt="Ciudad Bolívar, Un Paraíso para Soñar"/>
+    </div>
+  </div>
+  <div class="pie-cuerpo">
+    <div>
+      <div class="pie-marca">
+        <img src="/img/marca/turisteando.png" alt="Turisteando en Ciudad Bolívar"/>
+        <span>Turisteando en<br/>Ciudad Bolívar</span>
+      </div>
+      <p>Programa de recorridos turísticos guiados y gratuitos de la Dirección de Turismo Municipal.</p>
+    </div>
+
+    <div>
+      <h4>Dónde estamos</h4>
+      <p>
+        <strong>Dirección de Turismo Municipal</strong><br/>
+        Alcaldía del Municipio Angostura del Orinoco<br/>
+        Parroquia Catedral, Ciudad Bolívar<br/>
+        Estado Bolívar, Venezuela
+      </p>
+    </div>
+
+    <div>
+      <h4>Atención al público</h4>
+      <p>
+        Lunes a viernes<br/>
+        8:00 a. m. — 3:00 p. m.<br/>
+        <span style="color:rgba(255,255,255,0.42);font-size:0.8rem;">Las solicitudes se responden en días hábiles.</span>
+      </p>
+    </div>
+
+    <div>
+      <h4>Enlaces</h4>
+      <p>
+        <a href="/portal.html">Solicitar un recorrido</a><br/>
+        <a href="#rutas">Las 7 rutas</a><br/>
+        <a href="https://www.instagram.com/cbo_turismo" target="_blank" rel="noopener">Instagram @cbo_turismo</a><br/>
+        <a href="/admin.html">Acceso administrativo</a>
+      </p>
+    </div>
+  </div>
+  <div class="pie-legal">
+    <div class="pie-firma">
+      <img class="escudo" src="/img/marca/alcaldia-angostura-blanco.png" alt="Alcaldía del Municipio Angostura del Orinoco"/>
+    </div>
+    © <span id="anio">2026</span> Alcaldía del Municipio Angostura del Orinoco · Dirección de Turismo Municipal<br/>
+    Sistema desarrollado como proyecto de pasantía · Universidad Gran Mariscal de Ayacucho
+  </div>
+</footer>
+
+<div id="toast-container"></div>
+
+<script>
+document.getElementById('anio').textContent = new Date().getFullYear();
+
+function toggleMobileMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+function fmtFecha(valor, opciones) {
+  if (!valor) return '';
+  const d = new Date(String(valor).replace(' ', 'T'));
+  if (isNaN(d)) return String(valor);
+  return d.toLocaleDateString('es-VE', { timeZone: 'America/Caracas', ...opciones });
+}
+
+/* ────────────────────────────────────────────────────────────
+   FOTOGRAFÍAS DE LAS RUTAS
+   Provisional: se asignan por posición. En la Fase 2, cuando la
+   tabla `rutas` tenga la columna `imagen_clave`, esto se sustituye
+   por  r.imagen_url  que devuelva /api/rutas.
+   ──────────────────────────────────────────────────────────── */
+const FOTOS_RUTA = [
+  '/img/fotos/casco-historico.jpg',
+  '/img/fotos/paseo-orinoco.jpg',
+  '/img/fotos/hero-catedral.jpg',
+  '/img/fotos/museo-piar.jpg',
+  '/img/fotos/patio-colonial.jpg',
+  '/img/fotos/yo-amo-ciudad-bolivar.jpg',
+  '/img/fotos/hero-atardecer-orinoco.jpg',
+];
+const FOTO_RUTA_DEFECTO = '/img/fotos/hero-palacio-municipal.jpg';
+
+const RUTAS = [
+  { id:1, nombre:'Turisteando en Ciudad Bolívar', descripcion:'Recorrido por los principales atractivos históricos y culturales del casco central: Plaza Bolívar, Palacio Municipal y Paseo Orinoco.', color:'#FF007F' },
+  { id:2, nombre:'Turisteando en la Angostura del Orinoco', descripcion:'Experiencia a orillas del majestuoso río Orinoco, conociendo la historia de la Angostura y sus paisajes.', color:'#0088DB' },
+  { id:3, nombre:'Ruta Turística Religiosa Caminos de Fe', descripcion:'Visita a las iglesias, ermitas y espacios de devoción histórica, incluyendo la Catedral y la Santísima Trinidad.', color:'#6C2EB9' },
+  { id:4, nombre:'Ruta Turística La Gran Colombia', descripcion:'Recorrido histórico por los espacios del Congreso de Angostura de 1819 y la gesta libertadora.', color:'#FF6B00' },
+  { id:5, nombre:'Ruta Turística Historia Médica de Ciudad Bolívar', descripcion:'La historia de la medicina, las farmacias antiguas y las instituciones sanitarias históricas de la ciudad.', color:'#00B050' },
+  { id:6, nombre:'Ruta Turística Angostuarte', descripcion:'Espacios de arte, murales, galerías y expresiones culturales bolivarenses.', color:'#FFB300' },
+  { id:7, nombre:'El Recorrer de las Aves en Ciudad Bolívar', descripcion:'Avistamiento de aves y recorrido por los ecosistemas naturales, playas del Orinoco y espacios verdes.', color:'#00C5E0' },
+];
+
+/* Contraste automático: el amarillo y el cian del manual no se leen
+   en blanco, así que la cinta elige texto oscuro y el enlace usa una
+   versión oscurecida del color de la ruta. */
+function rgbDe(hex) {
+  const h = String(hex).replace('#', '');
+  const v = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  return [0, 2, 4].map(i => parseInt(v.slice(i, i + 2), 16) || 0);
+}
+function luminancia(hex) {
+  const [r, g, b] = rgbDe(hex).map(c => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function textoSobre(hex) { return luminancia(hex) > 0.42 ? '#2E134D' : '#FFFFFF'; }
+function oscurecer(hex, factor) {
+  const [r, g, b] = rgbDe(hex).map(c => Math.round(c * factor));
+  return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+}
+/* Color legible del color de ruta sobre fondo blanco (AA para texto pequeño) */
+function colorTexto(hex) {
+  let c = hex, i = 0;
+  while (luminancia(c) > 0.16 && i < 12) { c = oscurecer(c, 0.86); i++; }
+  return c;
+}
+
+function esc(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c => (
+    { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+  ));
+}
+
+function renderRutas(rutas) {
+  const grid = document.getElementById('rutasGrid');
+  grid.innerHTML = rutas.map((r, i) => {
+    const color   = r.color || '#6C2EB9';
+    const sobre   = textoSobre(color);
+    const enlace  = colorTexto(color);
+    const foto    = r.imagen_url || FOTOS_RUTA[i] || FOTO_RUTA_DEFECTO;
+    return `
+    <article class="ruta-card">
+      <div class="ruta-foto">
+        <img src="${esc(foto)}" alt="${esc(r.nombre)}" loading="lazy"/>
+        <span class="ruta-cinta" style="background:${esc(color)};color:${esc(sobre)}">RUTA ${i + 1}</span>
+      </div>
+      <div class="ruta-card-body">
+        <h3>${esc(r.nombre)}</h3>
+        <p>${esc(r.descripcion)}</p>
+        <a href="/portal.html" class="ruta-link" style="color:${esc(enlace)};background:${esc(color)}1A;">
+          Solicitar esta ruta
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+async function loadRutas() {
+  try {
+    const res  = await fetch('/api/rutas');
+    const data = res.ok ? await res.json() : [];
+    renderRutas(data.length ? data : RUTAS);
+  } catch { renderRutas(RUTAS); }
+}
+
+/* ────────────────────────────────────────────────────────────
+   ATRACTIVOS
+   Se cargan desde /api/atractivos, que devuelve lo que la
+   Dirección administra en el panel. Si un atractivo aún no
+   tiene fotografía cargada, se usa la de reserva que va aquí
+   abajo, emparejada por nombre.
+   ──────────────────────────────────────────────────────────── */
+const FOTO_ATRACTIVO_RESERVA = {
+  'catedral':        '/img/fotos/hero-catedral.jpg',
+  'paseo':           '/img/fotos/paseo-orinoco.jpg',
+  'puente':          '/img/fotos/hero-atardecer-orinoco.jpg',
+  'palacio':         '/img/fotos/hero-palacio-municipal.jpg',
+  'congreso':        '/img/fotos/casco-historico.jpg',
+  'casco':           '/img/fotos/casco-historico.jpg',
+  'cocina':          '/img/fotos/gastronomia.jpg',
+  'gastronom':       '/img/fotos/gastronomia.jpg',
+  'orinoco':         '/img/fotos/hero-orinoco-gabarra.jpg',
+  'museo':           '/img/fotos/museo-piar.jpg',
+};
+const FOTO_ATRACTIVO_DEFECTO = '/img/fotos/yo-amo-ciudad-bolivar.jpg';
+
+function fotoDeReserva(nombre) {
+  const n = String(nombre || '').toLowerCase();
+  for (const [clave, foto] of Object.entries(FOTO_ATRACTIVO_RESERVA)) {
+    if (n.includes(clave)) return foto;
+  }
+  return FOTO_ATRACTIVO_DEFECTO;
+}
+
+const ATRACTIVOS = [
+  { nom:'Catedral Metropolitana Santo Tomás Apóstol', cat:'Patrimonio', img:'/img/fotos/hero-catedral.jpg', destacado:true },
+  { nom:'Paseo Orinoco',              cat:'Paisaje',      img:'/img/fotos/paseo-orinoco.jpg' },
+  { nom:'Puente Angostura',           cat:'Ícono',        img:'/img/fotos/hero-atardecer-orinoco.jpg' },
+  { nom:'Palacio Municipal',          cat:'Patrimonio',   img:'/img/fotos/hero-palacio-municipal.jpg' },
+  { nom:'Casco histórico colonial',   cat:'Arquitectura', img:'/img/fotos/casco-historico.jpg' },
+  { nom:'Cocina guayanesa',           cat:'Gastronomía',  img:'/img/fotos/gastronomia.jpg' },
+  { nom:'El río Orinoco',             cat:'Naturaleza',   img:'/img/fotos/hero-orinoco-gabarra.jpg' },
+];
+
+function renderAtractivos(lista) {
+  const grid = document.getElementById('atractivosGrid');
+  if (!lista.length) { document.getElementById('atractivos').style.display = 'none'; return; }
+  grid.innerHTML = lista.map(a => `
+    <div class="atractivo${a.destacado ? ' atractivo-destacado' : ''}">
+      <img src="${esc(a.img)}" alt="${esc(a.nom)}" loading="lazy"/>
+      <div class="atractivo-txt">
+        <span class="cat">${esc(a.cat)}</span>
+        <span class="nom">${esc(a.nom)}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function loadAtractivos() {
+  try {
+    const res = await fetch('/api/atractivos');
+    const data = res.ok ? await res.json() : [];
+    if (!data.length) { renderAtractivos(ATRACTIVOS); return; }
+    renderAtractivos(data.map(a => ({
+      nom: a.nombre,
+      cat: CATEGORIA_ETIQUETA[a.categoria] || a.categoria || 'Atractivo',
+      img: a.imagen_url || fotoDeReserva(a.nombre),
+      destacado: !!a.destacado,
+    })));
+  } catch { renderAtractivos(ATRACTIVOS); }
+}
+
+const CATEGORIA_ETIQUETA = {
+  patrimonio:'Patrimonio', naturaleza:'Naturaleza', gastronomia:'Gastronomía',
+  cultura:'Cultura', paisaje:'Paisaje', arquitectura:'Arquitectura',
+};
+
+/* ── NOTICIAS ── */
+function renderNoticiasPublicas(noticias) {
+  const grid = document.getElementById('noticiasPublicGrid');
+  if (!noticias.length) { document.getElementById('noticias').style.display = 'none'; return; }
+  grid.innerHTML = noticias.map(n => `
+    <article class="noticia-card">
+      ${n.imagen_url ? `<img class="noticia-card-img" src="${esc(n.imagen_url)}" alt="${esc(n.titulo)}" loading="lazy"/>` : ''}
+      <div class="noticia-card-body">
+        <div class="noticia-card-date">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          ${esc(fmtFecha(n.created_at, { day:'numeric', month:'long', year:'numeric' }))}
+        </div>
+        <div class="noticia-card-title">${esc(n.titulo)}</div>
+        <div class="noticia-card-text">${esc(n.contenido)}</div>
+      </div>
+    </article>`).join('');
+}
+
+async function loadNoticias() {
+  const FALLBACK = [
+    { id:1, titulo:'Ciudad Bolívar, un paraíso para soñar', contenido:'Descubre la Casa del Congreso de Angostura, la Catedral Metropolitana Santo Tomás Apóstol y la Casa Correo del Orinoco, tesoros históricos de nuestra ciudad.', imagen_url:'/img/fotos/casco-historico.jpg', created_at:new Date().toISOString() },
+    { id:2, titulo:'Jornadas de capacitación turística', contenido:'La Dirección de Turismo Municipal forma a nuevos guías y prestadores de servicio para fortalecer la oferta turística del municipio.', imagen_url:'/img/fotos/recorridos-grupo.jpg', created_at:new Date().toISOString() },
+    { id:3, titulo:'Ciclismo sobre el Puente Angostura', contenido:'Eventos deportivos y recreativos que ponen en valor el ícono más reconocible de Ciudad Bolívar.', imagen_url:'/img/fotos/ciclismo-puente.jpg', created_at:new Date().toISOString() },
+  ];
+  try {
+    const res  = await fetch('/api/noticias');
+    const data = res.ok ? await res.json() : [];
+    renderNoticiasPublicas(data.length ? data : FALLBACK);
+  } catch { renderNoticiasPublicas(FALLBACK); }
+}
+
+loadAtractivos();
+loadRutas();
+loadNoticias();
+</script>
+</body>
+</html>

@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portal de Solicitudes — Turisteando CBO</title>
+  <link rel="icon" type="image/png" href="/img/marca/alcaldia-angostura.png"/>
+  <meta name="theme-color" content="#2E134D"/>
+  <link rel="stylesheet" href="/css/main.css"/>
+  <style>
+    body { background: var(--fondo); }
+    #authScreen {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 80px 16px 40px; position: relative;
+      background: url('/img/fotos/hero-palacio-municipal.jpg') center 45% / cover;
+    }
+    #authScreen::before {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: linear-gradient(160deg, rgba(46,19,77,0.94) 0%, rgba(74,29,122,0.88) 55%, rgba(24,12,48,0.96) 100%);
+    }
+    .auth-card {
+      background: var(--blanco); border-radius: var(--radio-xl);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+      width: 100%; max-width: 460px;
+      padding: 32px 28px; position: relative; z-index: 1;
+    }
+    .auth-logo { text-align:center; margin-bottom:20px; }
+    .auth-logo > img { width:68px; height:68px; border-radius:50%; margin-bottom:10px; }
+    .auth-logo h1 { font-size:1.25rem; color:var(--azul-indigo); }
+    .auth-logo p { color:var(--texto-suave); font-size:0.83rem; margin-top:3px; }
+    .auth-tabs { display:flex; background:var(--gris-100); border-radius:var(--radio-sm); padding:3px; margin-bottom:22px; }
+    .auth-tab { flex:1; padding:9px; border:none; background:transparent; border-radius:6px; font-family:var(--font-cuerpo); font-size:0.86rem; font-weight:700; cursor:pointer; transition:all var(--trans); color:var(--texto-suave); }
+    .auth-tab.active { background:var(--blanco); color:var(--morado); box-shadow:0 1px 4px var(--sombra); }
+    .forgot-link { display:block; text-align:center; font-size:0.82rem; color:var(--texto-suave); margin-top:10px; cursor:pointer; }
+    .forgot-link:hover { color:var(--morado); }
+
+    /* ── PORTAL ── */
+    #portalScreen { display:none; }
+    .portal-layout { max-width:1060px; margin:0 auto; padding:28px 16px; }
+    .portal-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:14px; }
+    .portal-welcome h2 { margin-bottom:4px; color:var(--azul-indigo); font-size:1.3rem; }
+    .portal-welcome p { color:var(--texto-suave); font-size:0.88rem; }
+    .portal-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+    .solicitud-card { background:var(--blanco); border-radius:var(--radio); border:1px solid var(--gris-200); overflow:hidden; margin-bottom:12px; transition:all var(--trans); }
+    .solicitud-card:hover { box-shadow:0 4px 20px var(--sombra-media); border-color:transparent; }
+    .solicitud-card-header { padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .solicitud-card-body { padding:12px 18px 16px; border-top:1px solid var(--gris-200); }
+    .solicitud-meta { display:flex; flex-wrap:wrap; gap:12px; font-size:0.82rem; color:var(--texto-suave); }
+    .solicitud-meta span { display:flex; align-items:center; gap:5px; }
+    .solicitud-nota { margin-top:10px; padding:10px 14px; border-radius:var(--radio-sm); background:var(--gris-100); font-size:0.83rem; }
+    .solicitud-nota strong { color:var(--azul-indigo); }
+    .solicitud-contacto { margin-top:8px; padding:10px 14px; border-radius:var(--radio-sm); background:#D1FAE5; font-size:0.83rem; color:#065F46; display:flex; align-items:center; gap:6px; }
+
+    .ruta-option { display:flex; align-items:center; gap:10px; padding:10px 14px; border:2px solid var(--gris-200); border-radius:var(--radio-sm); cursor:pointer; transition:all var(--trans); margin-bottom:6px; }
+    .ruta-option:hover { border-color:var(--morado); background:rgba(104,21,180,0.03); }
+    .ruta-option.selected { border-color:var(--morado); background:rgba(104,21,180,0.06); }
+    .ruta-option-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .personas-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+
+    .steps-indicator { display:flex; align-items:center; gap:8px; margin-bottom:24px; }
+    .step-dot { width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:800; flex-shrink:0; transition:all var(--trans); }
+    .step-dot.active { background:var(--morado); color:#fff; }
+    .step-dot.done { background:var(--verde); color:#fff; }
+    .step-dot.inactive { background:var(--gris-200); color:var(--texto-suave); }
+    .step-connector { flex:1; height:2px; background:var(--gris-200); border-radius:1px; }
+    .step-connector.done { background:var(--verde); }
+
+    /* Recuperar contraseña — oculto por class="hidden" en el HTML */
+    .recover-steps { display:flex; flex-direction:column; gap:16px; }
+
+    @media (max-width:600px) {
+      .personas-grid { grid-template-columns:1fr; }
+      .auth-card { padding:24px 18px; }
+      .portal-header { flex-direction:column; }
+      .portal-actions { width:100%; }
+      .portal-actions .btn { flex:1; justify-content:center; font-size:0.82rem; }
+    }
+
+    /* ── MENSAJERÍA ── */
+    .msg-lista { display:flex; flex-direction:column; gap:10px; }
+    .msg-hilo {
+      background:var(--blanco); border:1px solid var(--gris-200); border-radius:var(--radio);
+      padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer;
+      transition:border-color var(--trans), box-shadow var(--trans), transform var(--trans);
+      text-align:left; width:100%; font-family:var(--font-cuerpo);
+    }
+    .msg-hilo:hover { border-color:var(--morado); box-shadow:var(--sombra-media); transform:translateY(-1px); }
+    .msg-hilo-icono {
+      width:40px; height:40px; border-radius:12px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(108,46,185,0.10); color:var(--morado);
+    }
+    .msg-hilo-icono.soporte { background:rgba(0,136,219,0.10); color:var(--azul-orinoco); }
+    .msg-hilo-txt { flex:1; min-width:0; }
+    .msg-hilo-txt b { display:block; font-size:0.9rem; color:var(--purpura-noche); font-family:var(--font-titulo); font-weight:800; }
+    .msg-hilo-txt span { display:block; font-size:0.8rem; color:var(--texto-suave); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .msg-punto {
+      flex-shrink:0; min-width:22px; height:22px; padding:0 7px; border-radius:999px;
+      background:var(--magenta); color:#fff; font-size:0.7rem; font-weight:800;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .chat-cuerpo {
+      background:var(--fondo-alt); border-radius:var(--radio); padding:16px;
+      max-height:46vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px;
+    }
+    .burbuja { max-width:82%; padding:11px 15px; border-radius:16px; font-size:0.88rem; line-height:1.6; word-break:break-word; }
+    .burbuja .texto { white-space:pre-wrap; display:block; }
+    .burbuja .quien { display:block; font-size:0.68rem; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:4px; opacity:0.7; }
+    .burbuja .cuando { display:block; font-size:0.68rem; margin-top:6px; opacity:0.6; }
+    .burbuja.mia   { align-self:flex-end; background:var(--morado); color:#fff; border-bottom-right-radius:5px; }
+    .burbuja.ellos { align-self:flex-start; background:var(--blanco); color:var(--texto); border:1px solid var(--gris-200); border-bottom-left-radius:5px; }
+    .chat-envio { display:flex; gap:10px; align-items:flex-end; margin-top:14px; }
+    .chat-envio textarea { flex:1; min-height:52px; max-height:140px; font-family:var(--font-cuerpo); font-size:0.9rem; padding:11px 14px; border:2px solid var(--gris-200); border-radius:var(--radio-sm); outline:none; resize:vertical; color:var(--texto); }
+    .chat-envio textarea:focus { border-color:var(--morado); }
+    .chat-estado {
+      font-size:0.75rem; font-weight:700; padding:3px 11px; border-radius:999px;
+      background:var(--gris-100); color:var(--texto-suave);
+    }
+  </style>
+</head>
+<body>
+
+<div class="barra-institucional">
+  <img src="/img/marca/venezuela.png" alt="República Bolivariana de Venezuela"/>
+  <img src="/img/marca/gobernacion-bolivar.png" alt="Gobernación del Estado Bolívar"/>
+  <img src="/img/marca/alcaldia-angostura.png" alt="Alcaldía del Municipio Angostura del Orinoco"/>
+</div>
+
+<div class="nav-sticky">
+<nav class="navbar">
+  <a href="/" class="navbar-logo">
+    <img src="/img/marca/turisteando.png" alt="Turisteando CBO" class="navbar-logo-img"/>
+    <div class="navbar-brand">Turisteando en Ciudad Bolívar <span>Dirección de Turismo · Municipio Heres</span></div>
+  </a>
+  <div class="navbar-links" id="navLinks"><a href="/">Inicio</a></div>
+  <button class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-mobile-menu" id="mobileMenu">
+  <a href="/" onclick="toggleMobileMenu()">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Inicio
+  </a>
+  <button id="mobileLogoutBtn" style="display:none;" onclick="logout();toggleMobileMenu()">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    Cerrar Sesión
+  </button>
+</div>
+</div>
+
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="cintillo cintillo-sm" style="margin:-6px auto 20px;">
+        <img src="/img/marca/venezuela.png" alt="República Bolivariana de Venezuela"/>
+        <img src="/img/marca/gobernacion-bolivar.png" alt="Gobernación del Estado Bolívar"/>
+        <img src="/img/marca/alcaldia-angostura.png" alt="Alcaldía del Municipio Angostura del Orinoco"/>
+      </div>
+      <img src="/img/marca/turisteando.png" alt="Turisteando en Ciudad Bolívar"/>
+      <h1>Portal de Solicitudes</h1>
+      <p>Dirección de Turismo Municipal</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="showTab('login')">Iniciar Sesión</button>
+      <button class="auth-tab" onclick="showTab('register')">Registrarse</button>
+    </div>
+
+    <!-- LOGIN -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Correo Electrónico</label>
+        <input type="email" id="loginEmail" placeholder="tu@correo.com" required autocomplete="email"/>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password"/>
+      </div>
+      <button type="submit" class="btn btn-morado btn-full btn-lg" id="loginBtn">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+        Ingresar al Portal
+      </button>
+      <span class="forgot-link" onclick="showRecover()">¿Olvidaste tu contraseña?</span>
+    </form>
+
+    <!-- REGISTER -->
+    <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input type="text" id="regNombre" placeholder="Nombre y Apellido" required autocomplete="name"/>
+        </div>
+        <div class="form-group">
+          <label>Cédula / RIF *</label>
+          <div style="display:flex;gap:6px;">
+            <select id="regCedulaPrefijo" style="width:72px;flex-shrink:0;font-weight:700;text-align:center;">
+              <option value="V">V</option>
+              <option value="E">E</option>
+              <option value="J">J</option>
+              <option value="G">G</option>
+              <option value="P">P</option>
+            </select>
+            <input type="text" id="regCedulaNum" placeholder="12345678" required inputmode="numeric" maxlength="10" oninput="soloNumeros(this)"/>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Correo Electrónico *</label>
+        <input type="email" id="regEmail" placeholder="tu@correo.com" required/>
+      </div>
+      <div class="form-group">
+        <label>Teléfono de Contacto</label>
+        <input type="tel" id="regTelefono" placeholder="0412-1234567" maxlength="12" inputmode="tel" oninput="formatTelefono(this)"/>
+        <span style="font-size:0.7rem;color:var(--texto-suave);">Formato: 0412-1234567</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de Solicitante</label>
+          <select id="regTipo" onchange="toggleRegInstitucion()">
+            <option value="">Seleccionar...</option>
+            <option value="persona_natural">Persona Natural</option>
+            <option value="institucion">Institución</option>
+          </select>
+        </div>
+        <div class="form-group" id="regInstitucionWrap">
+          <label>Nombre de la Institución</label>
+          <input type="text" id="regInstitucion" placeholder="Nombre oficial"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Contraseña *</label>
+          <input type="password" id="regPass" placeholder="Mínimo 6 caracteres" required minlength="6"/>
+        </div>
+        <div class="form-group">
+          <label>Confirmar Contraseña *</label>
+          <input type="password" id="regPass2" placeholder="Repetir contraseña" required/>
+        </div>
+      </div>
+      <!-- Pregunta de seguridad -->
+      <div style="background:var(--gris-100);border-radius:var(--radio-sm);padding:14px;margin-bottom:16px;">
+        <p style="font-size:0.78rem;font-weight:700;color:var(--azul-indigo);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Pregunta de Seguridad (para recuperar contraseña)
+        </p>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Selecciona una pregunta</label>
+          <select id="regPregunta" required>
+            <option value="">Seleccionar...</option>
+            <option value="¿Cuál es el nombre de tu mascota de infancia?">¿Cuál es el nombre de tu mascota de infancia?</option>
+            <option value="¿En qué ciudad naciste?">¿En qué ciudad naciste?</option>
+            <option value="¿Cuál es el apellido materno de tu madre?">¿Cuál es el apellido materno de tu madre?</option>
+            <option value="¿Cuál fue el nombre de tu primera escuela?">¿Cuál fue el nombre de tu primera escuela?</option>
+            <option value="¿Cuál es el nombre de tu mejor amigo de infancia?">¿Cuál es el nombre de tu mejor amigo de infancia?</option>
+            <option value="¿Cuál es tu comida favorita?">¿Cuál es tu comida favorita?</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Tu respuesta secreta</label>
+          <input type="text" id="regRespuesta" placeholder="Respuesta que solo tú recuerdas" required/>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-morado btn-full btn-lg" id="regBtn">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        Crear Cuenta
+      </button>
+      <p class="text-center mt-2 text-sm text-suave">
+        ¿Ya tienes cuenta? <a href="#" onclick="showTab('login')" style="color:var(--morado);font-weight:700;">Iniciar sesión</a>
+      </p>
+    </form>
+
+    <!-- RECUPERAR CONTRASEÑA -->
+    <div id="recoverScreen" class="hidden">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <button onclick="hideRecover()" style="background:var(--gris-100);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h3 style="font-size:1.1rem;color:var(--azul-indigo);">Recuperar Contraseña</h3>
+      </div>
+
+      <!-- PASO 1: Buscar por cédula -->
+      <div id="rPaso1">
+        <p style="font-size:0.85rem;color:var(--texto-suave);margin-bottom:16px;">Ingresa tu cédula para buscar tu cuenta.</p>
+        <div class="form-group">
+          <label>Tu Cédula de Identidad</label>
+          <div style="display:flex;gap:6px;">
+            <select id="rCedulaPrefijo" style="width:72px;flex-shrink:0;font-weight:700;text-align:center;">
+              <option value="V">V</option>
+              <option value="E">E</option>
+              <option value="J">J</option>
+              <option value="G">G</option>
+              <option value="P">P</option>
+            </select>
+            <input type="text" id="rCedulaNum" placeholder="12345678" inputmode="numeric" maxlength="10" oninput="soloNumeros(this)"/>
+          </div>
+        </div>
+        <button class="btn btn-morado btn-full" onclick="buscarCuenta()">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+          Buscar mi cuenta
+        </button>
+      </div>
+
+      <!-- PASO 2: Responder pregunta -->
+      <div id="rPaso2" class="hidden">
+        <div style="background:var(--gris-100);border-radius:var(--radio-sm);padding:14px;margin-bottom:16px;">
+          <p style="font-size:0.78rem;color:var(--texto-suave);margin-bottom:4px;">Cuenta encontrada:</p>
+          <p style="font-weight:700;color:var(--azul-indigo);" id="rNombreUsuario"></p>
+        </div>
+        <div class="form-group">
+          <label>Pregunta de seguridad</label>
+          <p id="rPregunta" style="font-size:0.88rem;padding:10px 14px;background:var(--fondo-alt);border-radius:var(--radio-sm);font-weight:600;color:var(--texto);"></p>
+        </div>
+        <div class="form-group">
+          <label>Tu respuesta</label>
+          <input type="text" id="rRespuesta" placeholder="Tu respuesta secreta"/>
+        </div>
+        <button class="btn btn-verde btn-full" onclick="restablecerPassword()" id="rVerificarBtn">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Verificar Respuesta
+        </button>
+      </div>
+
+      <!-- PASO 3: Contraseña temporal generada -->
+      <div id="rPaso3" class="hidden">
+        <div style="text-align:center;margin-bottom:18px;">
+          <div style="width:60px;height:60px;border-radius:50%;background:#D1FAE5;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+            <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="#065F46" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 style="color:#065F46;font-size:1rem;margin-bottom:6px;">¡Identidad verificada!</h3>
+          <p style="font-size:0.82rem;color:var(--texto-suave);line-height:1.5;">Esta es tu contraseña temporal. Úsala para iniciar sesión — se te pedirá cambiarla de inmediato.</p>
+        </div>
+        <div style="background:var(--gris-100);border-radius:var(--radio-sm);padding:18px;text-align:center;margin-bottom:16px;border:2px dashed var(--morado);">
+          <p style="font-size:0.7rem;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Tu Contraseña Temporal</p>
+          <p id="rTempPassword" style="font-family:monospace;font-size:1.6rem;font-weight:900;color:var(--azul-indigo);letter-spacing:0.18em;"></p>
+          <button onclick="copiarTempPass()" style="margin-top:12px;background:transparent;border:1.5px solid var(--morado);color:var(--morado);border-radius:6px;padding:5px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.2s;">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copiar contraseña
+          </button>
+        </div>
+        <button class="btn btn-morado btn-full" onclick="hideRecover()">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+          Ir al Inicio de Sesión
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PORTAL SCREEN -->
+<div id="portalScreen">
+  <div class="portal-layout">
+    <div class="portal-header">
+      <div class="portal-welcome">
+        <h2 id="welcomeMsg">Bienvenido</h2>
+        <p>Gestiona tus solicitudes de recorridos turísticos</p>
+      </div>
+      <div class="portal-actions">
+        <button class="btn btn-morado" onclick="openNewRequest()">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Nueva Solicitud
+        </button>
+        <button class="btn btn-outline" onclick="openProfile()">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          Mi Perfil
+        </button>
+        <button class="btn btn-outline" onclick="logout()">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Salir
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:28px;">
+      <h3 style="margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+        Noticias y Eventos
+      </h3>
+      <div class="noticias-grid" id="portalEventosList" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));">
+        <div class="loading-wrap" style="grid-column:1/-1;padding:20px;"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+
+    <div style="margin-bottom:28px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <h3 style="display:flex;align-items:center;gap:8px;">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          Mensajes con la Dirección
+        </h3>
+        <button class="btn btn-sm btn-morado" onclick="abrirNuevaConsulta()">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Nueva consulta
+        </button>
+      </div>
+      <div id="hilosList" class="msg-lista">
+        <div class="loading-wrap" style="padding:20px;"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <h3 style="display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Mis Solicitudes
+      </h3>
+      <button onclick="loadMisSolicitudes()" class="btn btn-sm btn-outline">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Actualizar
+      </button>
+    </div>
+    <div id="solicitudesList">
+      <div class="loading-wrap"><div class="spinner"></div><span>Cargando...</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL CHAT -->
+<div class="modal-overlay" id="modalChat">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <div style="min-width:0;">
+        <h3 id="chatAsunto" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Conversación</h3>
+        <span class="chat-estado" id="chatEstado">abierta</span>
+      </div>
+      <button class="modal-close" onclick="cerrarChat()" aria-label="Cerrar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="chat-cuerpo" id="chatCuerpo">
+        <div class="loading-wrap"><div class="spinner"></div></div>
+      </div>
+      <form class="chat-envio" onsubmit="enviarMensaje(event)">
+        <textarea id="chatTexto" placeholder="Escribe tu mensaje..." maxlength="4000" required></textarea>
+        <button type="submit" class="btn btn-morado" id="chatEnviarBtn" style="height:52px;">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          Enviar
+        </button>
+      </form>
+      <p style="font-size:0.74rem;color:var(--texto-suave);margin-top:10px;">
+        La Dirección de Turismo responde en días hábiles, de 8:00 a. m. a 3:00 p. m.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA CONSULTA -->
+<div class="modal-overlay" id="modalConsulta">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>Nueva consulta</h3>
+      <button class="modal-close" onclick="closeModal('modalConsulta')" aria-label="Cerrar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form onsubmit="crearConsulta(event)">
+        <div class="form-group">
+          <label>¿Sobre qué necesitas escribir? *</label>
+          <select id="consultaTipo" required>
+            <option value="ruta">Las rutas y los recorridos</option>
+            <option value="soporte">Un problema con el sistema (soporte)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Asunto</label>
+          <input type="text" id="consultaAsunto" placeholder="Ej.: Disponibilidad para el mes de octubre" maxlength="120"/>
+        </div>
+        <div class="form-group">
+          <label>Tu mensaje *</label>
+          <textarea id="consultaCuerpo" placeholder="Cuéntanos con detalle en qué podemos ayudarte..." maxlength="4000" required style="min-height:120px;"></textarea>
+        </div>
+        <button type="submit" class="btn btn-morado btn-full btn-lg" id="consultaBtn">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          Enviar consulta
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MI PERFIL -->
+<div class="modal-overlay" id="modalPerfil">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Mi Perfil</h3>
+      <button class="modal-close" onclick="closeModal('modalPerfil')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="perfilForm" onsubmit="updateProfile(event)">
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input type="text" id="profNombre" required/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Correo Electrónico</label>
+            <input type="email" id="profEmail" disabled style="background:var(--gris-100)"/>
+          </div>
+          <div class="form-group">
+            <label>Cédula</label>
+            <input type="text" id="profCedula" disabled style="background:var(--gris-100)"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="profTelefono"/>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Solicitante</label>
+            <select id="profTipo">
+              <option value="">Seleccionar...</option>
+              <option value="persona_natural">Persona Natural</option>
+              <option value="institucion">Institución</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" id="profInstitucionWrap">
+          <label>Nombre de la Institución</label>
+          <input type="text" id="profInstitucion"/>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button type="button" class="btn btn-outline btn-full" onclick="closeModal('modalPerfil')">Cancelar</button>
+          <button type="submit" class="btn btn-morado btn-full" id="profSaveBtn">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA SOLICITUD -->
+<div class="modal-overlay" id="modalSolicitud">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Nueva Solicitud de Recorrido</h3>
+      <button class="modal-close" onclick="closeModal('modalSolicitud')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="steps-indicator">
+        <div class="step-dot active" id="stepDot1">1</div>
+        <div class="step-connector" id="stepConn1"></div>
+        <div class="step-dot inactive" id="stepDot2">2</div>
+        <div class="step-connector" id="stepConn2"></div>
+        <div class="step-dot inactive" id="stepDot3">3</div>
+      </div>
+
+      <form id="solicitudForm" onsubmit="submitSolicitud(event)">
+        <!-- PASO 1 -->
+        <div id="step1">
+          <h3 style="margin-bottom:14px;">Selecciona la Ruta Turística</h3>
+          <div id="rutasOptions"><div class="loading-wrap" style="padding:30px;"><div class="spinner"></div></div></div>
+          <input type="hidden" id="rutaIdSelected"/>
+          <div style="margin-top:18px;">
+            <button type="button" class="btn btn-morado btn-full" onclick="nextStep(2)">
+              Continuar
+              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- PASO 2 -->
+        <div id="step2" class="hidden">
+          <h3 style="margin-bottom:14px;">Datos del Solicitante</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de Solicitante *</label>
+              <select id="f_tipo" required onchange="toggleFormInstitucion()">
+                <option value="">Seleccionar...</option>
+                <option value="persona_natural">Persona Natural</option>
+                <option value="institucion">Institución</option>
+              </select>
+            </div>
+            <div class="form-group" id="f_institucionWrap">
+              <label id="f_institucionLabel">Nombre de la Institución *</label>
+              <input type="text" id="f_institucion" placeholder="Nombre oficial"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label id="f_nombreLabel">Nombre del Solicitante *</label>
+              <input type="text" id="f_nombre" placeholder="Nombre completo" required/>
+            </div>
+            <div class="form-group">
+              <label>Cédula del Solicitante</label>
+              <div style="display:flex;gap:6px;">
+                <select id="f_cedulaPrefijo" style="width:72px;flex-shrink:0;font-weight:700;text-align:center;">
+                  <option value="V">V</option>
+                  <option value="E">E</option>
+                  <option value="J">J</option>
+                  <option value="G">G</option>
+                  <option value="P">P</option>
+                </select>
+                <input type="text" id="f_cedulaNum" placeholder="12345678" inputmode="numeric" maxlength="10" oninput="soloNumeros(this)"/>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Teléfono de Contacto *</label>
+              <input type="tel" id="f_telefono" placeholder="0412-1234567" required maxlength="12" inputmode="tel" oninput="formatTelefono(this)"/>
+              <span style="font-size:0.7rem;color:var(--texto-suave);">Formato: 0412-1234567</span>
+            </div>
+            <div class="form-group">
+              <label>Email de Contacto</label>
+              <input type="email" id="f_email" placeholder="email@ejemplo.com"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Responsable del Grupo *</label>
+            <input type="text" id="f_responsable" placeholder="Nombre de la persona responsable" required/>
+          </div>
+          <div class="form-group">
+            <label>Fecha Preferida</label>
+            <input type="date" id="f_fecha"/>
+          </div>
+          <div class="form-group">
+            <label>Cantidad de Personas</label>
+            <div class="personas-grid">
+              <div class="form-group" style="margin:0;">
+                <label style="display:flex;align-items:center;gap:5px;">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                  Adultos
+                </label>
+                <input type="number" id="f_adultos" min="0" value="0"/>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="display:flex;align-items:center;gap:5px;">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  Niños / Menores
+                </label>
+                <input type="number" id="f_menores" min="0" value="0"/>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button type="button" class="btn btn-outline btn-full" onclick="prevStep(1)">
+              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              Volver
+            </button>
+            <button type="button" class="btn btn-morado btn-full" onclick="nextStep(3)">
+              Continuar
+              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- PASO 3 -->
+        <div id="step3" class="hidden">
+          <h3 style="margin-bottom:14px;">Confirmación y Envío</h3>
+          <div class="form-group">
+            <label>Observaciones adicionales</label>
+            <textarea id="f_obs" placeholder="Necesidades especiales, alumnos con discapacidad, solicitudes particulares..."></textarea>
+          </div>
+          <div style="background:var(--gris-100);border-radius:var(--radio-sm);padding:16px;margin-bottom:18px;" id="resumenSolicitud"></div>
+          <div style="display:flex;gap:10px;">
+            <button type="button" class="btn btn-outline btn-full" onclick="prevStep(2)">
+              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              Volver
+            </button>
+            <button type="submit" class="btn btn-morado btn-full btn-lg" id="submitBtn">
+              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              Enviar Solicitud
+            </button>
+          </div>
+          <p class="text-center mt-2 text-sm text-suave">Tu solicitud será revisada por la Directora de Turismo.</p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- MODAL CAMBIO DE CONTRASEÑA OBLIGATORIO -->
+<div class="modal-overlay" id="modalCambioPass">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 style="color:var(--naranja);display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        Cambio de Contraseña Requerido
+      </h3>
+    </div>
+    <div class="modal-body">
+      <div style="background:#FFF3E0;border-radius:var(--radio-sm);padding:12px 16px;margin-bottom:18px;font-size:0.84rem;color:#A65D00;display:flex;gap:8px;align-items:flex-start;">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;margin-top:2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Por seguridad, debes establecer una nueva contraseña permanente antes de continuar.
+      </div>
+      <div class="form-group">
+        <label>Nueva Contraseña *</label>
+        <input type="password" id="cpNueva" placeholder="Mínimo 6 caracteres" minlength="6"/>
+      </div>
+      <div class="form-group">
+        <label>Confirmar Nueva Contraseña *</label>
+        <input type="password" id="cpConfirmar" placeholder="Repite la contraseña"/>
+      </div>
+      <button class="btn btn-morado btn-full btn-lg" onclick="cambiarPasswordObligatorio()" id="cpBtn">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Guardar Nueva Contraseña
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+const RUTAS_FALLBACK = [
+  { id:1, nombre:'Turisteando en Ciudad Bolívar', color:'#C80C6F' },
+  { id:2, nombre:'Turisteando en la Angostura del Orinoco', color:'#869FE1' },
+  { id:3, nombre:'Ruta Turística Religiosa Caminos de Fe', color:'#6815B4' },
+  { id:4, nombre:'Ruta Turística La Gran Colombia', color:'#E98A05' },
+  { id:5, nombre:'Ruta Turística Historia Médica de Ciudad Bolívar', color:'#09A305' },
+  { id:6, nombre:'Ruta Turística Angostuarte', color:'#FAB900' },
+  { id:7, nombre:'El Recorrer de las Aves en Ciudad Bolívar', color:'#272674' },
+];
+let rutasData = [];
+let currentUser = null;
+let currentStep = 1;
+let rUsuarioId = null;
+
+const ESTADO_LABELS = { pendiente:'Pendiente', en_revision:'En Revisión', aprobada:'Aprobada', denegada:'Denegada', en_proceso:'En Proceso', cumplida:'Cumplida' };
+const TIPO_LABELS = { persona_natural:'Persona Natural', institucion:'Institución', colegio:'Colegio/U.E.', universidad:'Universidad', empresa:'Empresa', familia:'Grupo Familiar', turista:'Turistas', otro:'Otro' };
+
+const ICON_SVG = {
+  calendar: `<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  users: `<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+  building: `<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>`,
+  phone: `<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>`,
+};
+
+// ── DATE HELPER ──
+function fmtFecha(valor, opciones) {
+  if (!valor) return '';
+  let str = String(valor).replace(' ', 'T'); // normaliza espacio de Postgres
+  // Si es solo YYYY-MM-DD, añade mediodía para evitar desfase UTC
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) str += 'T12:00:00';
+  const d = new Date(str);
+  if (isNaN(d)) return String(valor);
+  return d.toLocaleDateString('es-VE', { timeZone: 'America/Caracas', ...opciones });
+}
+
+// ── HELPERS ──
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = (type === 'success' ? `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` : type === 'error' ? `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` : '') + msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+function getToken() { return localStorage.getItem('tourist_token'); }
+function getUser() { try { return JSON.parse(localStorage.getItem('tourist_user')); } catch { return null; } }
+function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+
+// ── VALIDACIONES ──
+function soloNumeros(el) {
+  el.value = el.value.replace(/\D/g, '');
+}
+function formatTelefono(el) {
+  let v = el.value.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4);
+  el.value = v;
+}
+function getCedulaCompuesta(prefijoId, numId) {
+  const prefijo = document.getElementById(prefijoId).value;
+  const num = document.getElementById(numId).value.trim();
+  return num ? `${prefijo}-${num}` : '';
+}
+function validarCedulaNum(numId) {
+  const num = document.getElementById(numId).value.trim();
+  if (!num) return 'Ingresa el número de cédula.';
+  if (num.length < 6) return 'La cédula debe tener al menos 6 dígitos.';
+  return null;
+}
+function validarTelefono(val) {
+  if (!val) return null; // opcional
+  const clean = val.replace(/\D/g, '');
+  if (clean.length < 11) return 'El teléfono debe tener 11 dígitos (ej: 0412-1234567).';
+  if (!/^0(412|414|416|424|426|212|261|251|241)/.test(clean)) return 'Código de área no válido (ej: 0412, 0414, 0424, 0212...).';
+  return null;
+}
+function validarNombre(val) {
+  if (!val || val.trim().length < 3) return 'El nombre debe tener al menos 3 caracteres.';
+  if (val.trim().split(/\s+/).length < 2) return 'Ingresa nombre y apellido.';
+  return null;
+}
+
+// ── AUTH ──
+function checkAuth() {
+  const token = getToken(); const user = getUser();
+  if (token && user) { currentUser = user; showPortal(); }
+  else { showAuth(); }
+}
+function showAuth() {
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('portalScreen').style.display = 'none';
+  document.getElementById('navLinks').innerHTML = '<a href="/">Inicio</a>';
+  document.getElementById('mobileLogoutBtn').style.display = 'none';
+}
+function showPortal() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('portalScreen').style.display = 'block';
+  document.getElementById('welcomeMsg').textContent = `Hola, ${currentUser.nombre.split(' ')[0]}`;
+  document.getElementById('navLinks').innerHTML = `<a href="/">Inicio</a><span style="color:rgba(255,255,255,0.5);font-size:0.8rem;">${currentUser.nombre}</span>`;
+  document.getElementById('mobileLogoutBtn').style.display = 'flex';
+  loadMisSolicitudes(); loadRutas(); loadEventos(); loadHilos();
+}
+
+// ── TABS ──
+function showTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('recoverScreen').classList.add('hidden');
+}
+function showRecover() {
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('registerForm').classList.add('hidden');
+  document.getElementById('recoverScreen').classList.remove('hidden');
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+  // Resetear todos los pasos y limpiar campos
+  document.getElementById('rPaso1').classList.remove('hidden');
+  document.getElementById('rPaso2').classList.add('hidden');
+  document.getElementById('rPaso3').classList.add('hidden');
+  document.getElementById('rCedula').value = '';
+  document.getElementById('rRespuesta').value = '';
+  rUsuarioId = null;
+}
+function hideRecover() {
+  document.getElementById('recoverScreen').classList.add('hidden');
+  showTab('login');
+}
+
+// ── RECUPERAR CONTRASEÑA ──
+async function buscarCuenta() {
+  const errCedula = validarCedulaNum('rCedulaNum');
+  if (errCedula) { toast(errCedula, 'error'); return; }
+  const cedula = getCedulaCompuesta('rCedulaPrefijo', 'rCedulaNum');
+  try {
+    const res = await fetch(`${API}/forgot-password`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ cedula })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error, 'error'); return; }
+    rUsuarioId = data.usuario_id;
+    document.getElementById('rNombreUsuario').textContent = data.nombre;
+    document.getElementById('rPregunta').textContent = data.pregunta;
+    document.getElementById('rPaso1').classList.add('hidden');
+    document.getElementById('rPaso2').classList.remove('hidden');
+  } catch { toast('Error de conexión.', 'error'); }
+}
+async function restablecerPassword() {
+  const respuesta = document.getElementById('rRespuesta').value.trim();
+  if (!respuesta) { toast('Ingresa tu respuesta de seguridad.', 'error'); return; }
+  const btn = document.getElementById('rVerificarBtn'); btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/reset-password`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ usuario_id: rUsuarioId, respuesta })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error, 'error'); return; }
+    document.getElementById('rPaso2').classList.add('hidden');
+    document.getElementById('rPaso3').classList.remove('hidden');
+    document.getElementById('rTempPassword').textContent = data.password_temporal;
+  } catch { toast('Error de conexión.', 'error'); }
+  finally { btn.disabled = false; }
+}
+function copiarTempPass() {
+  const pass = document.getElementById('rTempPassword').textContent;
+  navigator.clipboard.writeText(pass)
+    .then(() => toast('Contraseña copiada al portapapeles.', 'success'))
+    .catch(() => {
+      const el = document.createElement('textarea');
+      el.value = pass; document.body.appendChild(el); el.select();
+      document.execCommand('copy'); document.body.removeChild(el);
+      toast('Contraseña copiada.', 'success');
+    });
+}
+
+// ── LOGIN ──
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn'); btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPass').value })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error al iniciar sesión.', 'error'); return; }
+    if (data.user.rol === 'admin') {
+      localStorage.setItem('admin_token', data.token);
+      localStorage.setItem('admin_user', JSON.stringify(data.user));
+      window.location.href='/admin.html';
+      return;
+    }
+    localStorage.setItem('tourist_token', data.token);
+    localStorage.setItem('tourist_user', JSON.stringify(data.user));
+    currentUser = data.user;
+    toast(`¡Bienvenido, ${data.user.nombre.split(' ')[0]}!`, 'success');
+    showPortal();
+    // Si debe cambiar contraseña (viene de recuperación)
+    if (data.user.debe_cambiar_password) {
+      setTimeout(() => {
+        document.getElementById('modalCambioPass').classList.add('active');
+      }, 800);
+    }
+  } catch { toast('Error de conexión.', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+async function cambiarPasswordObligatorio() {
+  const nueva = document.getElementById('cpNueva').value;
+  const confirmar = document.getElementById('cpConfirmar').value;
+  if (!nueva || nueva.length < 6) { toast('La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+  if (nueva !== confirmar) { toast('Las contraseñas no coinciden.', 'error'); return; }
+  const btn = document.getElementById('cpBtn'); btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ nueva_password: nueva })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error al cambiar contraseña.', 'error'); return; }
+    // Actualizar flag en localStorage
+    currentUser.debe_cambiar_password = false;
+    localStorage.setItem('tourist_user', JSON.stringify(currentUser));
+    document.getElementById('modalCambioPass').classList.remove('active');
+    toast('¡Contraseña actualizada correctamente! Ya puedes usar el portal.', 'success');
+  } catch { toast('Error de conexión.', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+// ── REGISTER ──
+function toggleRegInstitucion() {
+  const tipo = document.getElementById('regTipo').value;
+  document.getElementById('regInstitucionWrap').classList.toggle('hidden', tipo === 'persona_natural');
+}
+async function handleRegister(e) {
+  e.preventDefault();
+  
+  const errNombre = validarNombre(document.getElementById('regNombre').value);
+  if (errNombre) { toast(errNombre, 'error'); return; }
+  
+  const errCedula = validarCedulaNum('regCedulaNum');
+  if (errCedula) { toast(errCedula, 'error'); return; }
+  const cedula = getCedulaCompuesta('regCedulaPrefijo', 'regCedulaNum');
+  
+  const errTel = validarTelefono(document.getElementById('regTelefono').value);
+  if (errTel) { toast(errTel, 'error'); return; }
+  
+  const pass = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  if (pass !== pass2) { toast('Las contraseñas no coinciden.', 'error'); return; }
+  const btn = document.getElementById('regBtn'); btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/register`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        nombre: document.getElementById('regNombre').value,
+        email: document.getElementById('regEmail').value,
+        password: pass,
+        telefono: document.getElementById('regTelefono').value,
+        cedula: cedula,
+        tipo_solicitante: document.getElementById('regTipo').value,
+        nombre_institucion: document.getElementById('regInstitucion').value,
+        pregunta_seguridad: document.getElementById('regPregunta').value,
+        respuesta_seguridad: document.getElementById('regRespuesta').value,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error al registrarse.', 'error'); return; }
+    localStorage.setItem('tourist_token', data.token);
+    localStorage.setItem('tourist_user', JSON.stringify(data.user));
+    currentUser = data.user;
+    toast('¡Cuenta creada! Bienvenido.', 'success');
+    showPortal();
+  } catch { toast('Error de conexión.', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+// ── RUTAS ──
+async function loadRutas() {
+  try { const res = await fetch(`${API}/rutas`); rutasData = res.ok ? await res.json() : RUTAS_FALLBACK; }
+  catch { rutasData = RUTAS_FALLBACK; }
+  renderRutasOptions();
+}
+function renderRutasOptions() {
+  document.getElementById('rutasOptions').innerHTML = rutasData.map(r => `
+    <div class="ruta-option" onclick="selectRuta(${r.id})" id="rutaOpt_${r.id}">
+      <div class="ruta-option-dot" style="background:${r.color}"></div>
+      <span style="font-weight:600;font-size:0.88rem;flex:1">${r.nombre}</span>
+    </div>
+  `).join('');
+}
+function selectRuta(id) {
+  document.querySelectorAll('.ruta-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`rutaOpt_${id}`)?.classList.add('selected');
+  document.getElementById('rutaIdSelected').value = id;
+}
+
+// ── EVENTOS ──
+async function loadEventos() {
+  const list = document.getElementById('portalEventosList');
+  try {
+    const res = await fetch(API + '/noticias');
+    const data = res.ok ? await res.json() : [];
+    if (!data.length) { list.innerHTML = '<p style="color:var(--texto-suave);font-size:0.85rem;padding:10px;">Sin eventos recientes.</p>'; return; }
+    list.innerHTML = data.map(n => {
+      const fecha = fmtFecha(n.created_at, {day:'numeric',month:'long',year:'numeric'});
+      return `<div class="noticia-card">
+        ${n.imagen_url ? `<img class="noticia-card-img" src="${n.imagen_url}" alt="${n.titulo}" style="height:130px"/>` : ''}
+        <div class="noticia-card-body" style="padding:14px;">
+          <div class="noticia-card-date" style="font-size:0.7rem;">${ICON_SVG.calendar} ${fecha}</div>
+          <div class="noticia-card-title" style="font-size:0.9rem">${n.titulo}</div>
+          <div class="noticia-card-text" style="font-size:0.8rem">${n.contenido || ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch { list.innerHTML = '<p style="color:var(--texto-suave);font-size:0.85rem;">Error al cargar.</p>'; }
+}
+
+// ── PERFIL ──
+async function openProfile() {
+  try {
+    const res = await fetch(API + '/profile', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    document.getElementById('profNombre').value = data.nombre || '';
+    document.getElementById('profEmail').value = data.email || '';
+    document.getElementById('profCedula').value = data.cedula || '';
+    document.getElementById('profTelefono').value = data.telefono || '';
+    document.getElementById('profTipo').value = data.tipo_solicitante || '';
+    document.getElementById('profInstitucion').value = data.nombre_institucion || '';
+    document.getElementById('profInstitucionWrap').style.display = (data.tipo_solicitante === 'institucion') ? 'flex' : 'none';
+    document.getElementById('profTipo').onchange = (e) => {
+      document.getElementById('profInstitucionWrap').style.display = (e.target.value === 'institucion') ? 'flex' : 'none';
+    };
+    document.getElementById('modalPerfil').classList.add('active');
+  } catch { toast('Error al cargar perfil.', 'error'); }
+}
+async function updateProfile(e) {
+  e.preventDefault();
+  const btn = document.getElementById('profSaveBtn'); btn.disabled = true;
+  try {
+    const res = await fetch(API + '/profile', {
+      method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+      body: JSON.stringify({
+        nombre: document.getElementById('profNombre').value,
+        telefono: document.getElementById('profTelefono').value,
+        tipo_solicitante: document.getElementById('profTipo').value,
+        nombre_institucion: document.getElementById('profInstitucion').value
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    currentUser.nombre = data.nombre;
+    localStorage.setItem('tourist_user', JSON.stringify(currentUser));
+    toast('Perfil actualizado.', 'success');
+    closeModal('modalPerfil');
+    document.getElementById('welcomeMsg').textContent = `Hola, ${currentUser.nombre.split(' ')[0]}`;
+  } catch (err) { toast(err.message || 'Error.', 'error'); }
+  finally { btn.disabled = false; }
+}
+function logout() { localStorage.clear(); currentUser = null; showAuth(); toast('Sesión cerrada.', 'info'); }
+
+// ── STEPS ──
+function updateStepUI() {
+  for (let i=1;i<=3;i++) {
+    document.getElementById(`step${i}`).classList.toggle('hidden', i!==currentStep);
+    const dot = document.getElementById(`stepDot${i}`);
+    dot.className = 'step-dot ' + (i<currentStep?'done':i===currentStep?'active':'inactive');
+    if (i<currentStep) dot.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
+    else dot.textContent = i;
+  }
+  for (let i=1;i<=2;i++) document.getElementById(`stepConn${i}`)?.classList.toggle('done', i<currentStep);
+}
+function nextStep(n) {
+  if (n===2 && !document.getElementById('rutaIdSelected').value) { toast('Selecciona una ruta.', 'error'); return; }
+  if (n===3) {
+    const inputs = document.getElementById('step2').querySelectorAll('[required]');
+    for (const inp of inputs) { if (!inp.value) { inp.focus(); toast('Completa todos los campos obligatorios.', 'error'); return; } }
+    
+    const errNombre = validarNombre(document.getElementById('f_nombre').value);
+    if (errNombre) { toast(errNombre, 'error'); return; }
+    
+    if (document.getElementById('f_cedulaNum').value) {
+      const errCedula = validarCedulaNum('f_cedulaNum');
+      if (errCedula) { toast(errCedula, 'error'); return; }
+    }
+    
+    const errTel = validarTelefono(document.getElementById('f_telefono').value);
+    if (errTel) { toast(errTel, 'error'); return; }
+    
+    const adultos = +document.getElementById('f_adultos').value||0;
+    const menores = +document.getElementById('f_menores').value||0;
+    if (adultos + menores === 0) { toast('Debes indicar al menos 1 persona.', 'error'); return; }
+    
+    renderResumen();
+  }
+  currentStep = n; updateStepUI();
+}
+function prevStep(n) { currentStep = n; updateStepUI(); }
+
+function toggleFormInstitucion() {
+  const tipo = document.getElementById('f_tipo').value;
+  document.getElementById('f_institucionWrap').classList.toggle('hidden', tipo === 'persona_natural');
+}
+
+function renderResumen() {
+  const ruta = rutasData.find(r => r.id == document.getElementById('rutaIdSelected').value);
+  const adultos = +document.getElementById('f_adultos').value||0;
+  const menores = +document.getElementById('f_menores').value||0;
+  const fecha = document.getElementById('f_fecha').value;
+  document.getElementById('resumenSolicitud').innerHTML = `
+    <p style="font-weight:800;margin-bottom:10px;color:var(--azul-indigo);">Resumen de tu solicitud</p>
+    <div style="display:grid;gap:6px;font-size:0.84rem;">
+      <div><strong>Ruta:</strong> <span style="color:${ruta?.color||'#333'};font-weight:700;">${ruta?.nombre||'No seleccionada'}</span></div>
+      <div><strong>Tipo:</strong> ${TIPO_LABELS[document.getElementById('f_tipo').value]||document.getElementById('f_tipo').value}</div>
+      <div><strong>Solicitante:</strong> ${document.getElementById('f_nombre').value}</div>
+      <div><strong>Personas:</strong> ${adultos+menores} total (${adultos} adultos, ${menores} niños)</div>
+      ${fecha ? `<div><strong>Fecha preferida:</strong> ${fmtFecha(fecha, {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>` : ''}
+    </div>
+  `;
+}
+
+// ── ENVIAR SOLICITUD ──
+async function submitSolicitud(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn'); btn.disabled = true;
+  const cedula = document.getElementById('f_cedulaNum').value ? getCedulaCompuesta('f_cedulaPrefijo', 'f_cedulaNum') : null;
+  try {
+    const res = await fetch(`${API}/solicitudes`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`},
+      body: JSON.stringify({
+        nombre_solicitante: document.getElementById('f_nombre').value,
+        cedula_solicitante: cedula,
+        telefono_contacto: document.getElementById('f_telefono').value,
+        email_contacto: document.getElementById('f_email').value,
+        tipo_grupo: document.getElementById('f_tipo').value,
+        nombre_institucion: document.getElementById('f_institucion').value,
+        ruta_id: +document.getElementById('rutaIdSelected').value,
+        fecha_preferida: document.getElementById('f_fecha').value || null,
+        cantidad_adultos: +document.getElementById('f_adultos').value||0,
+        cantidad_menores: +document.getElementById('f_menores').value||0,
+        cantidad_docentes: 0,
+        responsable_principal: document.getElementById('f_responsable').value,
+        observaciones: document.getElementById('f_obs').value,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error al enviar.', 'error'); return; }
+    toast('¡Solicitud enviada! Será revisada por la Directora de Turismo.', 'success');
+    closeModal('modalSolicitud');
+    loadMisSolicitudes();
+  } catch { toast('Error de conexión.', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+// ── MIS SOLICITUDES ──
+async function loadMisSolicitudes() {
+  const list = document.getElementById('solicitudesList');
+  list.innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Cargando...</span></div>';
+  try {
+    const res = await fetch(`${API}/solicitudes`, { headers: {'Authorization':`Bearer ${getToken()}`} });
+    const data = await res.json();
+    if (!res.ok) { list.innerHTML = '<div class="empty-state"><p>Error al cargar solicitudes.</p></div>'; return; }
+    if (!data.length) {
+      list.innerHTML = `<div class="empty-state">
+        <svg class="icon-empty" width="52" height="52" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <h3>Aún no tienes solicitudes</h3>
+        <p>Haz clic en "Nueva Solicitud" para solicitar un recorrido turístico.</p>
+      </div>`; return;
+    }
+    list.innerHTML = data.map(s => {
+      const fecha = fmtFecha(s.created_at, {day:'2-digit',month:'short',year:'numeric'});
+      const total = (+s.cantidad_adultos||0) + (+s.cantidad_menores||0);
+      return `<div class="solicitud-card">
+        <div class="solicitud-card-header">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+            <div style="width:38px;height:38px;border-radius:10px;background:${s.ruta_color||'#6815B4'}15;color:${s.ruta_color||'#6815B4'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+            </div>
+            <div style="min-width:0;">
+              <div style="font-weight:700;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.ruta_nombre||'Ruta no definida'}</div>
+              <div style="font-size:0.73rem;color:var(--texto-suave);">Solicitud #${s.id} · ${fecha}</div>
+            </div>
+          </div>
+          <span class="badge badge-${s.estado}">${ESTADO_LABELS[s.estado]||s.estado}</span>
+        </div>
+        <div class="solicitud-card-body">
+          <div class="solicitud-meta">
+            ${s.nombre_institucion ? `<span>${ICON_SVG.building} ${s.nombre_institucion}</span>` : ''}
+            <span>${ICON_SVG.users} ${total} personas (${+s.cantidad_adultos||0} adultos, ${+s.cantidad_menores||0} niños)</span>
+            ${s.fecha_preferida ? `<span>${ICON_SVG.calendar} ${fmtFecha(s.fecha_preferida, {day:'numeric',month:'short',year:'numeric'})}</span>` : ''}
+          </div>
+          ${s.nota_admin ? `<div class="solicitud-nota"><strong>Nota del equipo de Turismo:</strong> ${s.nota_admin}</div>` : ''}
+          ${s.telefono_asignado ? `<div class="solicitud-contacto">${ICON_SVG.phone} <strong>Contacto asignado:</strong> ${s.telefono_asignado}${s.fecha_asignada ? ` · ${fmtFecha(s.fecha_asignada, {weekday:'long',day:'numeric',month:'long'})}` : ''}</div>` : ''}
+          <div style="margin-top:14px;">
+            <button class="btn btn-sm btn-outline" onclick="abrirChatSolicitud(${s.id})">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Escribir sobre esta solicitud
+            </button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch { list.innerHTML = '<div class="empty-state"><p>Error de conexión.</p></div>'; }
+}
+
+// ── MODAL ──
+function openNewRequest() {
+  currentStep = 1; updateStepUI();
+  document.getElementById('rutaIdSelected').value = '';
+  document.querySelectorAll('.ruta-option').forEach(el => el.classList.remove('selected'));
+  renderRutasOptions();
+  document.getElementById('solicitudForm').reset();
+  document.getElementById('modalSolicitud').classList.add('active');
+  if (!rutasData.length) loadRutas();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.getElementById('modalSolicitud').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('modalSolicitud'); });
+document.getElementById('modalPerfil').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('modalPerfil'); });
+
+
+// ════════════════════════════════════════════════════════════
+//  MENSAJERÍA CON LA DIRECCIÓN DE TURISMO
+//  Hilos de mensajes: no es un chat en vivo. Mientras el hilo
+//  está abierto se consulta cada 20 s por si hay respuesta.
+// ════════════════════════════════════════════════════════════
+
+let hilos = [];
+let chatActual = null;
+let chatTimer = null;
+
+function escapeHtml(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c => (
+    { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+  ));
+}
+
+const ICONO_CHAT = '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>';
+const ICONO_SOPORTE = '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"/></svg>';
+
+const ESTADO_HILO = { abierta:'Esperando respuesta', respondida:'Respondida', cerrada:'Cerrada' };
+
+async function loadHilos() {
+  const cont = document.getElementById('hilosList');
+  if (!cont) return;
+  try {
+    const res = await fetch(`${API}/conversaciones`, { headers:{'Authorization':`Bearer ${getToken()}`} });
+    if (!res.ok) throw new Error();
+    hilos = await res.json();
+  } catch {
+    cont.innerHTML = '<p style="font-size:0.85rem;color:var(--texto-suave);padding:10px 0;">No se pudieron cargar los mensajes.</p>';
+    return;
+  }
+
+  if (!hilos.length) {
+    cont.innerHTML = `<div class="empty-state" style="padding:26px 16px;">
+      <svg class="icon-empty" width="42" height="42" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      <h3>Todavía no has escrito</h3>
+      <p>Usa "Nueva consulta" para preguntar por una ruta, o escribe dentro de una solicitud para coordinar la fecha.</p>
+    </div>`;
+    return;
+  }
+
+  cont.innerHTML = hilos.map(h => {
+    const noLeidos = Number(h.no_leidos) || 0;
+    const previo = h.ultimo_cuerpo
+      ? (h.ultimo_autor_rol === 'admin' ? 'Dirección de Turismo: ' : 'Tú: ') + h.ultimo_cuerpo
+      : 'Sin mensajes';
+    return `<button class="msg-hilo" onclick="abrirChat(${h.id})">
+      <span class="msg-hilo-icono ${h.tipo === 'soporte' ? 'soporte' : ''}">${h.tipo === 'soporte' ? ICONO_SOPORTE : ICONO_CHAT}</span>
+      <span class="msg-hilo-txt">
+        <b>${escapeHtml(h.asunto || 'Conversación')}</b>
+        <span>${escapeHtml(previo.length > 90 ? previo.slice(0, 90) + '…' : previo)}</span>
+      </span>
+      ${noLeidos ? `<span class="msg-punto">${noLeidos}</span>` : `<span style="font-size:0.72rem;color:var(--texto-claro);white-space:nowrap;">${escapeHtml(ESTADO_HILO[h.estado] || h.estado)}</span>`}
+    </button>`;
+  }).join('');
+}
+
+function abrirNuevaConsulta() {
+  document.getElementById('consultaAsunto').value = '';
+  document.getElementById('consultaCuerpo').value = '';
+  document.getElementById('modalConsulta').classList.add('active');
+}
+
+async function crearConsulta(e) {
+  e.preventDefault();
+  const btn = document.getElementById('consultaBtn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/conversaciones`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`},
+      body: JSON.stringify({
+        tipo:   document.getElementById('consultaTipo').value,
+        asunto: document.getElementById('consultaAsunto').value.trim(),
+        cuerpo: document.getElementById('consultaCuerpo').value.trim(),
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    closeModal('modalConsulta');
+    toast('Consulta enviada. Te responderemos en días hábiles.', 'success');
+    await loadHilos();
+    abrirChat(data.id);
+  } catch (err) {
+    toast(err.message || 'No se pudo enviar la consulta.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/** Abre (o crea) el hilo de una solicitud concreta. */
+async function abrirChatSolicitud(solicitudId) {
+  const existente = hilos.find(h => Number(h.solicitud_id) === Number(solicitudId));
+  if (existente) { abrirChat(existente.id); return; }
+
+  const cuerpo = prompt('Escribe tu mensaje sobre esta solicitud:');
+  if (!cuerpo || !cuerpo.trim()) return;
+  try {
+    const res = await fetch(`${API}/conversaciones`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`},
+      body: JSON.stringify({ tipo:'ruta', solicitud_id: solicitudId, cuerpo: cuerpo.trim() })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    toast('Mensaje enviado.', 'success');
+    await loadHilos();
+    abrirChat(data.id);
+  } catch (err) {
+    toast(err.message || 'No se pudo enviar el mensaje.', 'error');
+  }
+}
+
+async function abrirChat(id) {
+  chatActual = id;
+  document.getElementById('chatTexto').value = '';
+  document.getElementById('chatCuerpo').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  document.getElementById('modalChat').classList.add('active');
+  await refrescarChat();
+  clearInterval(chatTimer);
+  chatTimer = setInterval(refrescarChat, 20000);
+}
+
+function cerrarChat() {
+  clearInterval(chatTimer);
+  chatTimer = null;
+  chatActual = null;
+  closeModal('modalChat');
+  loadHilos();
+}
+
+async function refrescarChat() {
+  if (!chatActual) return;
+  try {
+    const res = await fetch(`${API}/mensajes?conversacion_id=${chatActual}`, {
+      headers:{'Authorization':`Bearer ${getToken()}`}
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    pintarChat(data);
+  } catch {
+    document.getElementById('chatCuerpo').innerHTML =
+      '<p style="font-size:0.85rem;color:var(--texto-suave);text-align:center;padding:16px;">No se pudieron cargar los mensajes.</p>';
+  }
+}
+
+function pintarChat({ conversacion, mensajes }) {
+  document.getElementById('chatAsunto').textContent = conversacion.asunto || 'Conversación';
+  document.getElementById('chatEstado').textContent = ESTADO_HILO[conversacion.estado] || conversacion.estado;
+
+  const cont = document.getElementById('chatCuerpo');
+  const abajo = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 60;
+
+  cont.innerHTML = mensajes.map(m => {
+    const mio = m.autor_rol === 'solicitante';
+    const cuando = fmtFecha(m.created_at, { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    return `<div class="burbuja ${mio ? 'mia' : 'ellos'}">
+      <span class="quien">${mio ? 'Tú' : 'Dirección de Turismo'}</span>
+<span class="texto">${escapeHtml(m.cuerpo)}</span>${m.adjunto_url ? `<a href="${escapeHtml(m.adjunto_url)}" target="_blank" rel="noopener" style="display:block;margin-top:8px;"><img src="${escapeHtml(m.adjunto_url)}" alt="Adjunto" style="max-width:100%;border-radius:10px;"/></a>` : ''}
+      <span class="cuando">${escapeHtml(cuando)}</span>
+    </div>`;
+  }).join('');
+
+  if (abajo || cont.dataset.primera !== String(chatActual)) {
+    cont.scrollTop = cont.scrollHeight;
+    cont.dataset.primera = String(chatActual);
+  }
+}
+
+async function enviarMensaje(e) {
+  e.preventDefault();
+  const campo = document.getElementById('chatTexto');
+  const texto = campo.value.trim();
+  if (!texto || !chatActual) return;
+
+  const btn = document.getElementById('chatEnviarBtn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/mensajes`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`},
+      body: JSON.stringify({ conversacion_id: chatActual, cuerpo: texto })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    campo.value = '';
+    await refrescarChat();
+  } catch (err) {
+    toast(err.message || 'No se pudo enviar el mensaje.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('modalChat').addEventListener('click', e => { if (e.target === e.currentTarget) cerrarChat(); });
+document.getElementById('modalConsulta').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('modalConsulta'); });
+document.getElementById('chatTexto').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    document.getElementById('chatEnviarBtn').click();
+  }
+});
+
+
+checkAuth();
+</script>
+
+<footer class="pie-inst">
+  <div class="filete"></div>
+  <div class="pie-cintillo">
+    <div class="cintillo cintillo-sm">
+      <img src="/img/marca/turismo-venezuela.png" alt="Turismo Venezuela"/>
+      <img src="/img/marca/bolivar-tierra-de-encuentro.png" alt="Bolívar, Tierra de Encuentro"/>
+      <img src="/img/marca/ciudad-bolivar-paraiso.png" alt="Ciudad Bolívar, Un Paraíso para Soñar"/>
+    </div>
+  </div>
+  <div class="pie-legal">
+    <div class="pie-firma">
+      <img class="escudo" src="/img/marca/alcaldia-angostura-blanco.png" alt="Alcaldía del Municipio Angostura del Orinoco"/>
+    </div>
+    <strong style="color:#fff;">Dirección de Turismo Municipal</strong> · Alcaldía del Municipio Angostura del Orinoco<br/>
+    Parroquia Catedral, Ciudad Bolívar, Estado Bolívar · Atención: lunes a viernes, 8:00 a. m. — 3:00 p. m.<br/>
+    <span style="opacity:.7;">© <span class="anio-actual">2026</span> · <a href="/">Inicio</a> · <a href="/admin.html">Acceso administrativo</a></span>
+  </div>
+</footer>
+<script>document.querySelectorAll('.anio-actual').forEach(e => e.textContent = new Date().getFullYear());</script>
+</body>
+</html>

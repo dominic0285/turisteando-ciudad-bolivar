@@ -1,0 +1,7 @@
+# Copia este archivo como .dev.vars para trabajar en local con `npm run dev`.
+# NO lo subas a GitHub: .dev.vars está en .gitignore.
+DATABASE_URL="postgresql://usuario:clave@ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require"
+
+# Solo para crear el primer administrador con /api/admin/seed?secret=...
+SEED_SECRET="pon-aqui-una-clave-larga-y-aleatoria"
+ADMIN_PASSWORD_INICIAL="cambia-esta-clave"

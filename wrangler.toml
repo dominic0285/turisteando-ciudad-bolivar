@@ -1,0 +1,29 @@
+name = "turisteando-app"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "."
+
+# ─────────────────────────────────────────────────────────────
+# BUCKET DE IMÁGENES (Cloudflare R2)
+#
+# Crear el bucket UNA VEZ desde el panel de Cloudflare:
+#   Cloudflare Dashboard → R2 → Create bucket → nombre: turisteando-media
+#
+# O desde la terminal, si ya iniciaste sesión con `npx wrangler login`:
+#   npx wrangler r2 bucket create turisteando-media
+#
+# No hace falta hacer el bucket público ni configurarle un dominio:
+# las imágenes se sirven desde el propio sitio, en /media/<clave>,
+# a través de functions/media/[[clave]].js
+# ─────────────────────────────────────────────────────────────
+[[r2_buckets]]
+binding      = "MEDIA"
+bucket_name  = "turisteando-media"
+
+[vars]
+# DATABASE_URL no se pone aquí: es un secreto.
+# Ya está configurada en el panel de Cloudflare Pages del proyecto
+# turisteando-sistema (Settings → Environment variables). Si hiciera
+# falta volver a ponerla:
+#   Nombre: DATABASE_URL
+#   Valor:  postgresql://usuario:clave@ep-xxxx.neon.tech/neondb?sslmode=require

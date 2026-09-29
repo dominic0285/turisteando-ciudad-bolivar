@@ -1,0 +1,513 @@
+/* ============================================================
+   TURISTEANDO EN CIUDAD BOLÍVAR — v3.0
+   Sistema de Gestión de Solicitudes Turísticas
+   Dirección de Turismo · Alcaldía Angostura del Orinoco
+   Paleta y tipografías según el Manual de Identidad Visual
+   Ciudad Bolívar 262 (@cbo_turismo)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@500;600;700;800;900&family=Open+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* ── Primarios institucionales (Manual §2.A) ── */
+  --purpura-noche:#2E134D;
+  --violeta:       #4A1D7A;
+  --morado:        #6C2EB9;
+  --morado-claro:  #8B5FD6;
+  --morado-oscuro: #4A1D7A;
+  --azul-orinoco:  #0088DB;
+  --cian:          #00C5E0;
+
+  /* ── Vivos y festivos (Manual §2.B) ── */
+  --amarillo:      #FFB300;
+  --naranja:       #FFB300;
+  --naranja-claro: #FFC93D;
+  --naranja-fuego: #FF6B00;
+  --magenta:       #FF007F;
+  --verde:         #00B050;
+  --verde-claro:   #12C96A;
+  --rojo:          #CD1217;
+
+  /* ── Compatibilidad con nombres previos ── */
+  --azul-indigo:   #2E134D;
+  --rosa:          #FF007F;
+  --celeste:       #00C5E0;
+
+  /* ── Neutros (Manual §2.C) ── */
+  --blanco:       #FFFFFF;
+  --fondo:        #F5F3FA;
+  --fondo-alt:    #ECE7F5;
+  --gris-100:     #F1F5F9;
+  --gris-200:     #E3DEF0;
+  --gris-300:     #CBC4DE;
+  --gris-400:     #948CAE;
+  --texto:        #1E293B;
+  --texto-suave:  #5C5578;
+  --texto-claro:  #8E88A8;
+
+  --exito:        #00B050;
+  --error:        #CD1217;
+  --info:         #0088DB;
+  --advertencia:  #FFB300;
+
+  --sombra:       0 1px 3px rgba(46,19,77,0.06), 0 1px 2px rgba(46,19,77,0.04);
+  --sombra-media: 0 4px 12px rgba(46,19,77,0.08), 0 2px 4px rgba(46,19,77,0.05);
+  --sombra-fuerte:0 12px 32px rgba(46,19,77,0.14), 0 4px 8px rgba(46,19,77,0.07);
+  --sombra-hover: 0 8px 24px rgba(46,19,77,0.12), 0 2px 6px rgba(46,19,77,0.06);
+  --sombra-cintillo: 0 8px 24px rgba(0,0,0,0.22);
+
+  --radio:    16px;
+  --radio-sm: 10px;
+  --radio-lg: 24px;
+  --radio-xl: 32px;
+  --radio-cintillo: 24px;
+
+  --font-titulo: 'Montserrat', 'Segoe UI', sans-serif;
+  --font-display:'Bebas Neue', 'Montserrat', Impact, sans-serif;
+  --font-cuerpo: 'Open Sans', 'Segoe UI', sans-serif;
+  --trans: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --trans-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: var(--font-cuerpo);
+  background: var(--fondo);
+  color: var(--texto);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── TIPOGRAFÍA ── */
+h1, h2, h3, h4 {
+  font-family: var(--font-titulo);
+  font-weight: 800;
+  color: var(--purpura-noche);
+  line-height: 1.16;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+h1 { font-weight: 900; letter-spacing: -0.03em; }
+h1 { font-size: clamp(1.6rem, 4vw, 3rem); }
+h2 { font-size: clamp(1.3rem, 3vw, 2rem); }
+h3 { font-size: 1.1rem; }
+h4 { font-size: 0.95rem; }
+a { color: var(--morado); text-decoration: none; }
+
+/* ── BOTONES ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px; border-radius: var(--radio-sm);
+  border: 2px solid transparent; cursor: pointer;
+  font-family: var(--font-cuerpo); font-size: 0.9rem;
+  font-weight: 700; text-decoration: none;
+  transition: all var(--trans); white-space: nowrap;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: var(--sombra-media); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-morado  { background: var(--morado); color: #fff; border-color: var(--morado); }
+.btn-morado:hover { background: var(--morado-oscuro); border-color: var(--morado-oscuro); color:#fff; }
+.btn-naranja { background: var(--naranja); color: var(--purpura-noche); border-color: var(--naranja); }
+.btn-naranja:hover { background: var(--naranja-claro); border-color: var(--naranja-claro); color: var(--purpura-noche); }
+.btn-verde   { background: var(--verde); color: #fff; border-color: var(--verde); }
+.btn-azul    { background: var(--azul-indigo); color: #fff; border-color: var(--azul-indigo); }
+.btn-rojo    { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+.btn-outline { background: transparent; border: 2px solid var(--gris-300); color: var(--texto); }
+.btn-outline:hover { border-color: var(--morado); color: var(--morado); background: rgba(108,46,185,0.05); }
+.btn-outline-white { background: transparent; border: 2px solid rgba(255,255,255,0.35); color: #fff; }
+.btn-outline-white:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.6); color:#fff; }
+.btn-sm  { padding: 7px 14px; font-size: 0.82rem; }
+.btn-lg  { padding: 14px 28px; font-size: 1rem; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* ── NAVBAR ── */
+.navbar {
+  background: var(--azul-indigo);
+  padding: 0 24px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+}
+.navbar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0; }
+.navbar-logo-img { width: 40px; height: 40px; border-radius: 50%; object-fit: contain; background: #fff; padding: 2px; }
+.navbar-brand { font-family: var(--font-titulo); font-size: 0.95rem; font-weight: 800; color: #fff; line-height: 1.2; }
+.navbar-brand span { display: block; font-size: 0.62rem; font-family: var(--font-cuerpo); font-weight: 600; color: rgba(255,255,255,0.5); }
+.navbar-links { display: flex; gap: 6px; align-items: center; }
+.navbar-links a, .navbar-links button {
+  color: rgba(255,255,255,0.8); text-decoration: none;
+  font-size: 0.85rem; font-weight: 600;
+  padding: 7px 12px; border-radius: var(--radio-sm);
+  border: none; background: transparent; cursor: pointer;
+  transition: all var(--trans); font-family: var(--font-cuerpo);
+  display: flex; align-items: center; gap: 6px;
+}
+.navbar-links a:hover, .navbar-links button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* Hamburger */
+.nav-hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: transparent; border: none; cursor: pointer; padding: 8px;
+}
+.nav-hamburger span { width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: all 0.3s; display: block; }
+.nav-mobile-menu {
+  display: none; position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--azul-indigo); z-index: 99;
+  flex-direction: column; gap: 4px; padding: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.nav-mobile-menu.open { display: flex; }
+.nav-mobile-menu a, .nav-mobile-menu button {
+  color: rgba(255,255,255,0.85); font-size: 0.92rem; font-weight: 600;
+  padding: 12px 16px; border-radius: var(--radio-sm);
+  border: none; background: transparent; cursor: pointer;
+  font-family: var(--font-cuerpo); text-align: left;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+}
+.nav-mobile-menu a:hover, .nav-mobile-menu button:hover { background: rgba(255,255,255,0.1); color:#fff; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--blanco); border-radius: var(--radio-lg);
+  box-shadow: var(--sombra); overflow: hidden;
+  transition: all var(--trans); border: 1px solid rgba(232,230,240,0.6);
+}
+.card:hover { box-shadow: var(--sombra-hover); transform: translateY(-3px); border-color: transparent; }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 999px;
+  font-size: 0.73rem; font-weight: 700; letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.badge-pendiente   { background: #FEF3CD; color: #92660A; }
+.badge-en_revision { background: #E0E7FF; color: #3730A3; }
+.badge-aprobada    { background: #D1FAE5; color: #065F46; }
+.badge-denegada    { background: #FEE2E2; color: #991B1B; }
+.badge-en_proceso  { background: #FFF3E0; color: #A65D00; }
+.badge-cumplida    { background: #EDE9FE; color: #5B21B6; }
+
+/* ── FORMULARIOS ── */
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-group label { font-weight: 700; font-size: 0.82rem; color: var(--azul-indigo); letter-spacing: 0.02em; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 11px 14px; border: 2px solid var(--gris-200);
+  border-radius: var(--radio-sm); font-family: var(--font-cuerpo);
+  font-size: 0.9rem; color: var(--texto); background: var(--blanco);
+  transition: border-color var(--trans), box-shadow var(--trans); outline: none;
+  width: 100%;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--morado); box-shadow: 0 0 0 4px rgba(108,46,185,0.10); }
+.form-group input::placeholder, .form-group textarea::placeholder { color: var(--texto-claro); }
+.form-group textarea { resize: vertical; min-height: 88px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ── NOTICIAS ── */
+.noticias-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px; max-width: 1080px; margin: 0 auto;
+}
+.noticia-card {
+  background: var(--blanco); border-radius: var(--radio-lg);
+  overflow: hidden; border: 1px solid rgba(232,230,240,0.6);
+  box-shadow: var(--sombra); transition: all var(--trans);
+  display: flex; flex-direction: column;
+}
+.noticia-card:hover { transform: translateY(-4px); box-shadow: var(--sombra-fuerte); border-color: transparent; }
+.noticia-card-img { width: 100%; height: 200px; object-fit: cover; display: block; }
+.noticia-card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+.noticia-card-date { font-size: 0.72rem; font-weight: 700; color: var(--morado); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+.noticia-card-title { font-family: var(--font-titulo); font-size: 1rem; font-weight: 800; color: var(--texto); margin-bottom: 8px; }
+.noticia-card-text { font-size: 0.84rem; color: var(--texto-suave); line-height: 1.65; flex: 1; }
+
+/* ── TOAST ── */
+#toast-container { position: fixed; bottom: 20px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast {
+  padding: 12px 18px; border-radius: var(--radio-sm);
+  color: #fff; font-weight: 700; font-size: 0.85rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  animation: slideInRight 0.3s ease, fadeOut 0.4s ease 2.6s forwards;
+  max-width: 320px; display: flex; align-items: center; gap: 8px;
+}
+.toast-success { background: var(--verde); }
+.toast-error   { background: var(--rojo); }
+.toast-info    { background: var(--azul-indigo); }
+@keyframes slideInRight { from { transform: translateX(120%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes fadeOut { to { opacity:0; transform: translateX(120%); } }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(30,27,75,0.6); backdrop-filter: blur(6px);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--blanco); border-radius: var(--radio-lg);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+  width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto;
+  transform: scale(0.95) translateY(16px); transition: transform 0.25s;
+}
+.modal-overlay.active .modal { transform: scale(1) translateY(0); }
+.modal-header {
+  padding: 20px 24px 16px; display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; background: var(--blanco); z-index: 1;
+  border-bottom: 2px solid var(--gris-200);
+}
+.modal-header h3 { font-size: 1.2rem; color: var(--azul-indigo); }
+.modal-close {
+  background: var(--gris-100); border: none; width: 34px; height: 34px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: background var(--trans); flex-shrink: 0; color: var(--texto-suave);
+}
+.modal-close:hover { background: var(--gris-200); color: var(--texto); }
+.modal-body { padding: 20px 24px 24px; }
+
+/* ── LOADING ── */
+.spinner { width: 34px; height: 34px; border: 3px solid var(--gris-200); border-top-color: var(--morado); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 48px; color: var(--texto-suave); font-size: 0.88rem; }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--texto-suave); }
+.empty-state .icon-empty { display: block; margin: 0 auto 16px; opacity: 0.35; }
+.empty-state h3 { color: var(--texto); margin-bottom: 8px; }
+
+/* ── UTILITIES ── */
+.text-center { text-align: center; }
+.mt-1{margin-top:8px} .mt-2{margin-top:16px} .mt-3{margin-top:24px}
+.mb-1{margin-bottom:8px} .mb-2{margin-bottom:16px} .mb-3{margin-bottom:24px}
+.hidden { display: none !important; }
+.text-suave { color: var(--texto-suave); }
+.text-sm { font-size: 0.875rem; }
+.font-bold { font-weight: 700; }
+.divider { height: 1px; background: var(--gris-200); margin: 20px 0; }
+.flex { display:flex; }
+.items-center { align-items:center; }
+.gap-2{gap:16px}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--fondo); }
+::-webkit-scrollbar-thumb { background: var(--gris-300); border-radius: 3px; }
+::selection { background: rgba(108,46,185,0.16); color: var(--purpura-noche); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .navbar { padding: 0 16px; }
+  .navbar-brand span { display: none; }
+  .navbar-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .modal { max-height: 95vh; border-radius: var(--radio) var(--radio) 0 0; }
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-body { padding: 16px; }
+  .modal-header { padding: 16px; }
+  #toast-container { left: 16px; right: 16px; bottom: 16px; }
+  .toast { max-width: 100%; }
+}
+
+
+/* ============================================================
+   CINTILLOS INSTITUCIONALES (Manual §4)
+   Cápsula blanca flotante con los logos de los entes.
+   ============================================================ */
+.cintillo-zona { display: flex; justify-content: center; padding: 0 16px; }
+.cintillo {
+  background: var(--blanco);
+  border-radius: var(--radio-cintillo);
+  box-shadow: var(--sombra-cintillo);
+  padding: 10px 26px;
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(14px, 3vw, 34px); flex-wrap: wrap;
+  max-width: 100%;
+}
+.cintillo img { height: 46px; width: auto; display: block; }
+.cintillo-sm { padding: 8px 18px; gap: clamp(10px, 2.4vw, 24px); }
+.cintillo-sm img { height: 34px; }
+@media (max-width: 560px) {
+  .cintillo img { height: 32px; }
+  .cintillo-sm img { height: 26px; }
+  .cintillo { padding: 8px 16px; gap: 14px; }
+}
+
+/* Barra institucional fija sobre el navbar */
+.barra-institucional {
+  background: var(--blanco);
+  border-bottom: 1px solid var(--gris-200);
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(16px, 4vw, 40px); padding: 7px 16px; flex-wrap: wrap;
+}
+.barra-institucional img { height: 40px; width: auto; }
+@media (max-width: 560px) { .barra-institucional img { height: 26px; } .barra-institucional { gap: 16px; } }
+
+/* Filete de colores institucionales */
+.filete {
+  height: 5px; width: 100%;
+  background: linear-gradient(90deg,
+    var(--amarillo) 0 20%, var(--magenta) 20% 40%,
+    var(--morado) 40% 60%, var(--cian) 60% 80%, var(--verde) 80% 100%);
+}
+
+/* ============================================================
+   ETIQUETAS DE SECCIÓN (Bebas Neue, Manual §3.2)
+   ============================================================ */
+.rotulo {
+  font-family: var(--font-display);
+  font-size: 1.05rem; letter-spacing: 0.16em;
+  color: var(--morado); text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.rotulo::before {
+  content: ''; width: 26px; height: 3px; border-radius: 2px;
+  background: var(--amarillo); flex: none;
+}
+.rotulo-claro { color: var(--amarillo); }
+.rotulo-claro::before { background: var(--amarillo); }
+
+/* ============================================================
+   FONDOS FOTOGRÁFICOS OSCURECIDOS
+   El archivo JPG se guarda SIN retocar: el oscurecido es esta capa.
+   ============================================================ */
+.foto-fondo { position: relative; background-size: cover; background-position: center; isolation: isolate; }
+.foto-fondo::before {
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(180deg,
+    rgba(46,19,77,0.88) 0%, rgba(46,19,77,0.58) 38%,
+    rgba(46,19,77,0.82) 78%, rgba(46,19,77,0.96) 100%);
+}
+.foto-fondo::after {
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(100deg, rgba(74,29,122,0.55) 0%, transparent 55%);
+  mix-blend-mode: multiply;
+}
+.foto-fondo > * { position: relative; z-index: 1; }
+.foto-fondo-suave::before {
+  background: linear-gradient(180deg, rgba(46,19,77,0.70) 0%, rgba(46,19,77,0.84) 100%);
+}
+/* Oscurecido lateral: para franjas donde el texto va a la izquierda
+   y conviene que la fotografía respire a la derecha. */
+.foto-fondo-lateral::after {
+  background: linear-gradient(90deg,
+    rgba(46,19,77,0.84) 0%, rgba(46,19,77,0.58) 45%, rgba(46,19,77,0.10) 100%);
+  mix-blend-mode: normal;
+}
+
+/* ============================================================
+   PIE INSTITUCIONAL
+   ============================================================ */
+.pie-inst { background: var(--purpura-noche); color: rgba(255,255,255,0.62); }
+.pie-inst .pie-cintillo { padding: 30px 16px 26px; display: flex; justify-content: center; }
+.pie-inst .pie-cuerpo {
+  max-width: 1080px; margin: 0 auto; padding: 0 24px 34px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 30px; font-size: 0.86rem; line-height: 1.75;
+}
+.pie-inst h4 {
+  font-family: var(--font-display); font-weight: 400;
+  letter-spacing: 0.15em; font-size: 0.95rem;
+  color: rgba(255,255,255,0.45); margin-bottom: 10px;
+}
+.pie-inst strong { color: #fff; font-weight: 700; }
+.pie-inst a { color: var(--naranja-claro); }
+.pie-inst a:hover { text-decoration: underline; }
+.pie-marca { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.pie-marca img { width: 46px; height: 46px; border-radius: 50%; background: #fff; padding: 3px; object-fit: contain; }
+.pie-marca span { font-family: var(--font-titulo); font-weight: 800; color: #fff; font-size: 0.95rem; line-height: 1.25; }
+.pie-legal {
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding: 18px 24px 30px; text-align: center;
+  font-size: 0.75rem; color: rgba(255,255,255,0.4);
+  max-width: 1080px; margin: 0 auto;
+}
+.pie-firma { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 18px; }
+.pie-firma img.escudo { height: 78px; width: auto; }
+.pie-firma img.firma  { height: 40px; width: auto; }
+
+/* ============================================================
+   TARJETAS DE RUTA CON FOTOGRAFÍA
+   ============================================================ */
+.ruta-foto { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--gris-200); }
+.ruta-foto img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--trans-slow); }
+.ruta-card:hover .ruta-foto img { transform: scale(1.06); }
+.ruta-foto::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(46,19,77,0.72) 100%);
+}
+.ruta-foto .ruta-etiqueta {
+  position: absolute; left: 14px; bottom: 12px; z-index: 2;
+  font-family: var(--font-display); letter-spacing: 0.13em;
+  font-size: 0.86rem; color: #fff;
+}
+.ruta-foto .ruta-cinta {
+  position: absolute; top: 12px; left: 0; z-index: 2;
+  font-family: var(--font-display); letter-spacing: 0.12em; font-size: 0.8rem;
+  color: #fff; padding: 4px 14px 4px 12px;
+  border-radius: 0 999px 999px 0;
+}
+
+/* ============================================================
+   ATRACTIVOS (mosaico del inicio)
+   ============================================================ */
+.atractivos-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-auto-rows: 252px; gap: 16px; max-width: 1080px; margin: 0 auto;
+}
+.atractivo {
+  position: relative; border-radius: var(--radio); overflow: hidden;
+  height: 100%; display: flex; align-items: flex-end;
+  box-shadow: var(--sombra-media); text-decoration: none;
+}
+.atractivo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform var(--trans-slow); }
+.atractivo::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(46,19,77,0.05) 35%, rgba(46,19,77,0.88) 100%);
+}
+.atractivo:hover img { transform: scale(1.05); }
+.atractivo-txt { position: relative; z-index: 2; padding: 20px; color: #fff; }
+.atractivo-txt .cat {
+  font-family: var(--font-display); letter-spacing: 0.14em;
+  font-size: 0.78rem; color: var(--naranja-claro); display: block; margin-bottom: 3px;
+}
+.atractivo-txt .nom { font-family: var(--font-titulo); font-weight: 800; font-size: 1.05rem; line-height: 1.25; }
+
+@media (min-width: 900px) { .atractivo-destacado { grid-column: span 2; } }
+
+/* ============================================================
+   DATOS DE CONTACTO / HORARIO
+   ============================================================ */
+.dato-linea { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.dato-linea svg { flex: none; margin-top: 3px; opacity: 0.7; }
+
+
+/* Contenedor pegajoso: navbar + menú móvil viajan juntos, de modo que
+   el cintillo institucional puede vivir encima sin descuadrar el menú. */
+.nav-sticky { position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
+.nav-sticky .navbar { position: static; box-shadow: none; }
+
+
+/* El cintillo nunca hereda los tamaños de logo de la página que lo aloja */
+.cintillo img, .barra-institucional img { border-radius: 0 !important; }
+.cintillo img { height: 46px !important; width: auto !important; }
+.cintillo-sm img { height: 34px !important; }
+@media (max-width: 560px) {
+  .cintillo img { height: 32px !important; }
+  .cintillo-sm img { height: 26px !important; }
+}
+
+
+/* El botón del navbar conserva su relleno pese a las reglas de enlace */
+.navbar-links a.btn { border-width: 2px; border-style: solid; }
+.navbar-links a.btn-naranja { background: var(--naranja); color: var(--purpura-noche); border-color: var(--naranja); }
+.navbar-links a.btn-naranja:hover { background: var(--naranja-claro); border-color: var(--naranja-claro); color: var(--purpura-noche); }
+.navbar-links a.btn-morado { background: var(--morado); color: #fff; border-color: var(--morado); }
+.navbar-links a.btn-outline-white { background: transparent; color: #fff; border-color: rgba(255,255,255,0.35); }
