@@ -109,8 +109,10 @@ En Cloudflare Pages → *Settings → Variables* agrega `DATABASE_URL` (cifrada)
 
 > 🔐 Ninguna credencial está en el código: todo va en variables de entorno y `.dev.vars` está en `.gitignore`.
 
-## 👤 Autor
+## Autor
 
-**Dominic De Freitas** — [GitHub](https://github.com/dominic0285) · [LinkedIn](https://www.linkedin.com/in/dominic-de-freitas-07102828a/)
+**Dominic De Freitas** — Ingeniero en Informática (UGMA). Desarrollé esta plataforma durante mi pasantía de Desarrollo de Software en la Dirección de Turismo de la Alcaldía de Angostura del Orinoco. Desarrollo aplicaciones móviles y web con React Native, TypeScript, Node.js y Python, y busco mi primer puesto como desarrollador junior remoto.
+
+[Perfil de GitHub](https://github.com/dominic0285) · [LinkedIn](https://www.linkedin.com/in/dominic-de-freitas-07102828a/) · dominicdefreitasfd@gmail.com
 
 Logos y material institucional pertenecen a sus respectivas instituciones y se incluyen solo porque forman parte del sitio publicado.
